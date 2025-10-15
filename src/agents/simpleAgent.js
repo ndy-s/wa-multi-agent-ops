@@ -1,12 +1,14 @@
 import { ChatOpenAI } from "@langchain/openai";
-import {HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { config } from "../config/env.js";
 
 const model = new ChatOpenAI({
     temperature: 0.7,
     model: "tngtech/deepseek-r1t2-chimera:free",
     apiKey: config.openaiApiKey,
-    configuration: { baseURL: config.openaiBaseUrl },
+    configuration: { 
+        baseURL: config.openaiBaseUrl 
+    },
 });
 
 export async function invoke(userMessage) {

@@ -1,6 +1,6 @@
 import logger from "../../utils/logger.js";
 import { parseJid } from "../../utils/helpers.js";
-import { invoke as agentInvoke } from "../../agents/simpleAgent.js";
+import {invokeAgent as agentInvoke } from "../../agents/apiAgentTest.js";
 
 export async function textHandler(sock, msg) {
     const remoteJid = msg.key.remoteJid;

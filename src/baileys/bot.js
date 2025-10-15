@@ -7,7 +7,7 @@ import qrcode from "qrcode-terminal";
 import fs from "fs";
 import path from "path";
 import logger from "../utils/logger.js";
-import {handleMessage} from "./handlers/index.js";
+import { handleMessage } from "./handlers/index.js";
 
 const AUTH_INFO_PATH = path.join(process.cwd(), "auth_info");
 

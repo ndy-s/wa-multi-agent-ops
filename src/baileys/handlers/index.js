@@ -2,9 +2,8 @@ import { textHandler } from "./textHandler.js";
 import { stickerHandler } from "./stickerHandler.js";
 import { reactionHandler } from "./reactionHandler.js";
 import { config } from "../../config/env.js";
-import logger from "../../utils/logger.js"; // assuming you have your winston logger
+import logger from "../../utils/logger.js"; 
 
-// Map message types to handlers
 const handlers = {
     conversation: textHandler,
     stickerMessage: stickerHandler,
@@ -15,17 +14,14 @@ export async function handleMessage(sock, msg) {
     const remoteJid = msg?.key?.remoteJid;
     if (!remoteJid) return;
 
-    // Ignore non-whitelisted senders
     if (!config.whitelist.includes(remoteJid)) {
         logger.warn(`🚫 Ignored non-whitelisted sender: ${remoteJid}`);
         return;
     }
 
-    // Detect message type safely
     const messageType = msg?.message ? Object.keys(msg.message)[0] : null;
     if (!messageType) return;
 
-    // Log basic info about the message
     const preview = (() => {
         try {
             if (msg.message.conversation) return msg.message.conversation.slice(0, 100);
