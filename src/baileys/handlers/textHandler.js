@@ -1,6 +1,6 @@
 import logger from "../../utils/logger.js";
 import { parseJid } from "../../utils/helpers.js";
-import {invokeAgent as agentInvoke } from "../../agents/apiAgentTest.js";
+import { invokeAgent } from "../../agents/apiAgent.js";
 
 export async function textHandler(sock, msg) {
     const remoteJid = msg.key.remoteJid;
@@ -22,12 +22,26 @@ export async function textHandler(sock, msg) {
     const messageText =
         msg.message?.conversation ||
         msg.message?.extendedTextMessage?.text ||
-        "Unable to preview message";
+        "";
+
+    const msgKey = msg.key;
+    const userJid = msgKey.participant || msgKey.remoteJid;
+
+    let quotedContext = "";
+    const quotedMessage = msg.message.extendedTextMessage?.contextInfo?.quotedMessage;
+    if (quotedMessage) {
+        const quotedText =
+            quotedMessage.conversation ||
+            quotedMessage.extendedTextMessage?.text ||
+            "";
+
+        quotedContext = `(Replied to assistant: "${quotedText}")`;
+    }
 
     try {
         await sock.sendPresenceUpdate("composing", remoteJid);
 
-        const reply = await agentInvoke(messageText);
+        const reply = await invokeAgent(messageText);
 
         await sock.sendMessage(remoteJid, { text: reply });
 

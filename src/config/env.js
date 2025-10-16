@@ -16,4 +16,5 @@ export const config = {
     openaiApiKey: process.env.OPENAI_API_KEY,
     openaiBaseUrl: process.env.OPENAI_API_BASE_URL,
     whitelist: process.env.WHITELIST ? process.env.WHITELIST.split(",").map((id) => id.trim()) : [],
+    llmLocale: process.env.LLM_LOCALE || "en-US",
 };

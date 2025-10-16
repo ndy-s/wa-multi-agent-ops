@@ -1,111 +1,63 @@
-import { StateGraph, START, END } from "@langchain/langgraph";
-import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { callApi } from "../services/apiService.js";
-import { apiParserPrompt } from "../prompts/apiParserPrompt.js";
-import { config } from "../config/env.js";
-import { MemorySaver } from "@langchain/langgraph";
-import { Annotation } from "@langchain/langgraph";
-import apis from "../config/apiConfig.json" with { type: "json" };
+import { model } from "../models/deepseek.js";
+import { buildApiSystemPrompt } from "../prompts/buildApiSystemPrompt.js";
+import { parseAndValidateResponse, extractValidationErrors } from "../utils/helpers.js";
 
-const model = new ChatOpenAI({
-    temperature: 0,
-    model: "tngtech/deepseek-r1t2-chimera:free",
-    apiKey: config.openaiApiKey,
-    configuration: { baseURL: config.openaiBaseUrl },
-});
+export async function invokeAgent(userMessage, maxRetries = 2) {
+    let retryCount = 0;
+    let lastContent = "";
+    let lastErrors = {};
 
-const StateAnnotation = Annotation.Root({
-    message: { default: () => "" },
-    plan: { default: () => null },
-    apiResponse: { default: () => null },
-    reply: { default: () => "" },
-});
+    while (retryCount <= maxRetries) {
+        const messages = [
+            new SystemMessage(buildApiSystemPrompt()),
+            new HumanMessage(`User request: ${userMessage}`)
+        ];
 
-const checkpointer = new MemorySaver();
+        if (retryCount > 0) {
+            messages.push(
+                new SystemMessage(
+                    `Previous response failed validation:\n${JSON.stringify(lastErrors, null, 2)}\n` +
+                    `Original response:\n${lastContent}\n` +
+                    `Please correct it following the schema strictly.`
+                )
+            );
+        }
 
-const graph = new StateGraph(StateAnnotation)
-    .addNode("parse_with_llm", async (state) => {
-        console.log("Entering parse_with_llm node");
-        console.log("Input state:", state);
-        const userMsg = state.message || "No message provided";
-        const prompt = apiParserPrompt(apis, userMsg);
-        console.log("Generated prompt:", prompt);
-        let res;
+        console.log(messages);
+
         try {
-            res = await model.invoke([
-                new SystemMessage(prompt),
-            ]);
-        } catch (err) {
-            console.error("Error invoking model:", err);
-            throw err;
-        }
-        console.log("Raw LLM response:", res);
-        console.log("LLM content:", res.content);
-        let plan;
-        try {
-            plan = JSON.parse(res.content.trim().replace(/```json|```/g, '').trim());
-        } catch (err) {
-            console.error("JSON parse failed on:", res.content);
-            throw new Error(`Failed to parse LLM output: ${res.content}`);
-        }
-        console.log("Parsed plan:", plan);
-        return { ...state, plan };
-    })
-    .addNode("call_api", async (state) => {
-        console.log("Entering call_api node");
-        console.log("Input state:", state);
-        if (!state.plan || !state.plan.api_id) {
-            console.error("Invalid or missing plan:", state.plan);
-            throw new Error("No valid API plan generated from message");
-        }
-        const api = apis.find((a) => a.id === state.plan.api_id);
-        if (!api) {
-            console.error(`API not found for id: ${state.plan.api_id}`);
-            throw new Error(`API not found: ${state.plan.api_id}`);
-        }
-        console.log("Selected API:", api);
-        let apiResponse;
-        try {
-            apiResponse = await callApi(api, state.plan.params);
-        } catch (err) {
-            console.error("Error calling API:", err);
-            throw err;
-        }
-        console.log("API response:", apiResponse);
-        return { ...state, apiResponse };
-    })
-    .addNode("format_reply", (state) => {
-        console.log("Entering format_reply node");
-        console.log("Input state:", state);
-        let reply;
-        if (!state.apiResponse) {
-            reply = "No API was called or error occurred.";
-        } else {
-            reply = `Result: ${JSON.stringify(state.apiResponse)}`;
-        }
-        console.log("Formatted reply:", reply);
-        return { ...state, reply };
-    });
+            const res = await model.invoke(messages);
+            const content = res?.content?.trim();
+            lastContent = content;
 
-graph.addEdge(START, "parse_with_llm");
-graph.addEdge("parse_with_llm", "call_api");
-graph.addEdge("call_api", "format_reply");
-graph.addEdge("format_reply", END);
+            if (!content) return "I couldn't understand your request.";
 
-const app = graph.compile({ checkpointer });
+            const validated = parseAndValidateResponse(content);
 
-export async function invoke(userMessage) {
-    console.log("Invoke called with message:", userMessage);
-    const input = { message: userMessage };
-    const config = { configurable: { thread_id: "api-agent-thread" } };
-    let state;
-    try {
-        state = await app.invoke(input, config);
-    } catch (err) {
-        console.error("Error during graph invocation:", err);
-        throw err;
+            if (validated.type === "api_action") {
+                return validated.content.apis
+                    .map(a => `API: ${a.id}, Params: ${JSON.stringify(a.params)}`)
+                    .join("\n");
+            }
+
+            if (validated.type === "message") {
+                return validated.content.message || "I need more details.";
+            }
+
+            return "Unexpected response type from model.";
+
+        } catch (err) {
+            retryCount++;
+            if (err.name === "ZodError") {
+                lastErrors = extractValidationErrors(err, true);
+                console.warn(`Validation failed (attempt ${retryCount}):`, lastErrors);
+            } else {
+                lastErrors = { error: err.message || "Unknown error" };
+                console.warn(`Error (attempt ${retryCount}):`, lastErrors);
+            }
+        }
     }
-    console.log("Final state:", state);
-    return state.reply;
+
+    return "The model could not produce a valid response after multiple attempts.";
 }
