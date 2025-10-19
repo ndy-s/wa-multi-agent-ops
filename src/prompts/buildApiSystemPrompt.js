@@ -17,29 +17,22 @@ const formatExamples = (examples) =>
 Example ${i + 1}:
 Input: "${ex.input}"
 Output:
-${JSON.stringify(
-{
-thoughts: [
-"Mapped product name to prdCode using registry",
-"All required fields provided",
-"Ready to call API",
-],
-type: "api_action",
-inScope: true,
-content: {
-apis: [
-{
-id: ex.output.id,
-params: ex.output.params,
-},
-],
-message: null,
-},
-},
-null,
-2
-)}`)
-    .join("\n");
+${JSON.stringify({
+    thoughts: [
+        "Mapped product name to prdCode using registry",
+        "All required fields provided",
+        "Ready to call API",
+    ],
+    type: "api_action",
+    inScope: true,
+    content: {
+    apis: [{
+        id: ex.output.id,
+        params: ex.output.params,
+    },],
+    message: null,
+    },
+}, null, 2)}`).join("\n");
 
 const buildApiPrompt = (apis) => {
     const apiInstructions = apis
