@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getContactName } from "../utils/contacts.js";
 import { apiAgentSchema } from "../schemas/apiAgentSchema.js";
 
 export function toWhatsappJid(number) {
@@ -58,6 +59,25 @@ export function replaceMentionsWithNames(text, mentions = [], contacts = {}, bot
     return result;
 }
 
+export function formatLLMMessage(senderName, messageText, quotedContext = "") {
+    return [
+        // `[User: ${senderName}]`,
+        quotedContext,
+        `Message: "${messageText}"`
+    ].filter(Boolean).join("\n");
+}
+
+export function getQuotedContext(quotedMsg, quotedJid, contacts, botJid) {
+    if (!quotedMsg) return "";
+
+    let quotedText = quotedMsg.conversation || quotedMsg.extendedTextMessage?.text || "";
+    const quotedMentions = quotedMsg.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    quotedText = replaceMentionsWithNames(quotedText, quotedMentions, contacts, botJid);
+
+    const quotedName = quotedJid === botJid ? "Assistant" : getContactName(quotedJid, contacts);
+    return `Replying to ${quotedName}: "${quotedText}"`;
+}
+
 export function extractValidationErrors(err) {
     if (!err || !err.errors) return { error: "Unknown validation error" };
 
@@ -102,4 +122,82 @@ export function parseAndValidateResponse(content) {
         if (err instanceof z.ZodError) throw err;
         throw err;
     }
+}
+
+export function splitTextForChat(text, maxLength = 400) {
+    if (!text) return [];
+
+    // Convert escaped \n to real newlines first
+    text = text.replace(/\\n/g, "\n");
+
+    const chunks = [];
+    let currentChunk = "";
+
+    // Split paragraphs by real newlines
+    const paragraphs = text.split(/\n+/).map(p => p.trim()).filter(Boolean);
+
+    for (const para of paragraphs) {
+        // Split sentences by punctuation — but ignore numbers like "1." or "10.000"
+        const sentences = para.split(
+            /(?<!\d)\. (?=[A-Z0-9])|(?<=[!?])\s+(?=[A-Z0-9])/
+        );
+
+        for (const sentence of sentences) {
+            const s = sentence.trim();
+            if (!s) continue;
+
+            // If adding this sentence would exceed maxLength, finalize current chunk
+            if ((currentChunk + " " + s).trim().length > maxLength) {
+                const punctuationMatch = currentChunk.match(/^(.*[.!?])\s+[A-Z0-9]?.*$/);
+                if (punctuationMatch) {
+                    let chunk = punctuationMatch[1].trim().replace(/[!.]+$/, "");
+                    if (chunk) chunks.push(chunk);
+                    const remainder = currentChunk.slice(punctuationMatch[1].length).trim();
+                    currentChunk = remainder ? remainder + " " + s : s;
+                } else {
+                    let chunk = currentChunk.trim().replace(/[!.]+$/, "");
+                    if (chunk) chunks.push(chunk); 
+                    currentChunk = s;
+                }
+            } else {
+                currentChunk += (currentChunk ? " " : "") + s;
+            }
+
+            // If sentence ends with strong punctuation, we can safely push a chunk
+            if (/[.!?]$/.test(s) && currentChunk.length >= maxLength * 0.8) {
+                let chunk = currentChunk.trim().replace(/[!.]+$/, "");
+                if (chunk) chunks.push(chunk); 
+                currentChunk = "";
+            }
+        }
+
+        if (currentChunk) {
+            let chunk = currentChunk.trim().replace(/[!.]+$/, "");
+            if (chunk) chunks.push(chunk); 
+            currentChunk = "";
+        }
+    }
+
+    if (currentChunk) {
+        let chunk = currentChunk.trim().replace(/[!.]+$/, "");
+        if (chunk) chunks.push(chunk); 
+    }
+
+    return chunks;
+}
+
+export async function simulateTypingAndSend(sock, remoteJid, text, { quoted = null, skipTyping = false, wpm = 120 } = {}) {
+    if (!skipTyping) {
+        const words = text.trim().split(/\s+/).length;
+        const typingTime = (words / wpm) * 60 * 1000; // ms
+        const delay = Math.min(Math.max(typingTime, 800), 5000);
+
+        await sock.sendPresenceUpdate("composing", remoteJid);
+        await new Promise(resolve => setTimeout(resolve, delay));
+    }
+
+    await sock.sendMessage(remoteJid, { text }, quoted ? { quoted } : {});
+
+    // Small random pause after sending to mimic thinking
+    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700));
 }

@@ -3,7 +3,8 @@ import "dotenv/config";
 const required = [
     "SQLITE_URL",
     "OPENAI_API_KEY",
-    "OPENAI_API_BASE_URL",
+    "OPENROUTER_API_KEY",
+    "OPENROUTER_BASE_URL",
 ];
 
 for (const key of required) {
@@ -14,9 +15,16 @@ for (const key of required) {
 }
 
 export const config = {
-    sqliteUrl: process.env.SQLITE_URL,
-    openaiApiKey: process.env.OPENAI_API_KEY,
-    openaiBaseUrl: process.env.OPENAI_API_BASE_URL,
     whitelist: process.env.WHITELIST ? process.env.WHITELIST.split(",").map((id) => id.trim()) : [],
+
     llmLocale: process.env.LLM_LOCALE || "en-US",
+    embedderType: process.env.EMBEDDER_TYPE || "local",
+
+    sqliteUrl: process.env.SQLITE_URL,
+
+    openaiApiKey: process.env.OPENAI_API_KEY,
+
+    openrouterApiKey: process.env.OPENROUTER_API_KEY,
+    openrouterBaseUrl: process.env.OPENROUTER_BASE_URL,
+
 };

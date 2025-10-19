@@ -1,72 +1,70 @@
 import logger from "../../utils/logger.js";
 import { getContactName } from "../../utils/contacts.js";
-import { getDisplayName, parseJid, removeBotMention, replaceMentionsWithNames } from "../../utils/helpers.js";
+import { getDisplayName, parseJid, removeBotMention, replaceMentionsWithNames, simulateTypingAndSend, splitTextForChat, formatLLMMessage, getQuotedContext } from "../../utils/helpers.js";
 import { invokeAgent } from "../../agents/apiAgent.js";
 
 export async function textHandler(sock, msg) {
-    const remoteJid = msg.key.remoteJid;
-    const senderJid = msg.key.participant || remoteJid;
+    const { remoteJid, participant: participantJid } = msg.key;
     const isGroup = remoteJid.endsWith("@g.us");
+    const senderJid = participantJid || remoteJid;
+    const pushName = msg.pushName || "";
+
+    const botLid = sock.user?.lid ? parseJid(sock.user.lid) : null;
+    const botId = sock.user?.id ? parseJid(sock.user.id) : null;
+    const botJid = botLid || botId;
 
     const mentions = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-    const botJid = parseJid(sock.user.lid || sock.user.id);
 
     if (isGroup) {
         const hasMention = mentions.includes(botJid);
         const hasQuoted = !!msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-
         if (!hasMention && !hasQuoted) {
             logger.info(`📭 Ignored group message in ${remoteJid} (no mention/quote)`);
             return;
         }
     }
 
-    let messageText = (
-        msg.message?.conversation ||
-        msg.message?.extendedTextMessage?.text ||
-        ""
-    ).trim();
+    // Ensure the contact is up-to-date
+    const senderName = getContactName(senderJid, sock.store.contacts) || getDisplayName(pushName);
 
+    // Extract and clean message text
+    let messageText = msg.message?.conversation || msg.message?.extendedTextMessage?.text || "";
+    messageText = messageText.trim();
     messageText = removeBotMention(messageText, botJid);
     messageText = replaceMentionsWithNames(messageText, mentions, sock.store.contacts);
 
-    const senderName = getContactName(senderJid, sock.store.contacts) || getDisplayName(msg.pushName);
-
-    let quotedContext = "";
+    // Handle quoted message context
     const contextInfo = msg.message.extendedTextMessage?.contextInfo;
     const quotedMsg = contextInfo?.quotedMessage;
     const quotedJid = contextInfo?.participant;
-    const quotedMentions = quotedMsg?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    const quotedBotJid = isGroup ? botLid : botId;
+    const quotedContext = getQuotedContext(quotedMsg, quotedJid, sock.store.contacts, quotedBotJid);
 
-    if (quotedMsg) {
-        let quotedText =
-            quotedMsg.conversation ||
-            quotedMsg.extendedTextMessage?.text ||
-            "";
-
-        quotedText = replaceMentionsWithNames(quotedText, quotedMentions, sock.store.contacts, botJid);
-
-        const quotedName = quotedJid === botJid
-            ? "Assistant"
-            : getContactName(quotedJid, sock.store.contacts);
-
-        quotedContext = `Replying to ${quotedName}: "${quotedText}"`;
-    }
-
-    const fullMessageContext = [
-        `[User: ${senderName}]`,
-        quotedContext,
-        `Message: "${messageText}"`
-    ].filter(Boolean).join("\n");
+    const fullMessageContext = formatLLMMessage(senderName, messageText, quotedContext);
 
     try {
-        await sock.sendPresenceUpdate("composing", remoteJid);
+        const replyPromise = invokeAgent(remoteJid, senderJid, fullMessageContext, 2, true);
 
-        const reply = await invokeAgent(remoteJid, senderJid, fullMessageContext);
+        (async () => {
+            await new Promise(resolve => setTimeout(resolve, 4000)); 
+            await sock.sendPresenceUpdate("composing", remoteJid);
+        })();
 
-        await sock.sendMessage(remoteJid, { text: reply });
+        const replies = await replyPromise; 
 
-        logger.info(`✅ Replied to ${remoteJid}: ${reply.slice(0, 100)}`);
+        for (const reply of replies) {
+            const chunks = splitTextForChat(reply, 100);
+
+            for (const [index, chunk] of chunks.entries()) {
+                await simulateTypingAndSend(sock, remoteJid, chunk, {
+                    quoted: index === 0 ? msg : null,
+                    skipTyping: index === 0, 
+                    wpm: 120
+                });
+            }
+        }
+
+        logger.info(`✅ Replied to ${remoteJid}: ${replies.map(r => r.slice(0, 100)).join(" | ")}`);
     } catch (err) {
         logger.error(`❌ Error processing message from ${remoteJid}:`, err);
 
