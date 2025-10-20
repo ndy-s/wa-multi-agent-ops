@@ -55,7 +55,7 @@ export async function textHandler(sock, msg) {
         const replyPromise = invokeAgent(remoteJid, senderJid, fullMessageJSON, 2, true);
 
         (async () => {
-            await new Promise(resolve => setTimeout(resolve, 4000));
+            await new Promise(resolve => setTimeout(resolve, 3000));
             await sock.sendPresenceUpdate("composing", remoteJid);
         })();
 

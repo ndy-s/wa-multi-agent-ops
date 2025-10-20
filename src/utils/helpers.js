@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {getContactName} from "../utils/contacts.js";
+import {getContactName} from "./contacts.js";
 import {apiAgentSchema} from "../schemas/api-agent-schema.js";
 
 export function toWhatsappJid(number) {
