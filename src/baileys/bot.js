@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import logger from "../utils/logger.js";
 import { handleMessage } from "./handlers/index.js";
-import { openDB } from "../utils/db.js";
+import { openDB } from "../db/sqlite.js";
 
 const AUTH_INFO_PATH = path.join(process.cwd(), "auth_info");
 

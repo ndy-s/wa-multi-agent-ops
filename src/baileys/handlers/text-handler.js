@@ -1,7 +1,16 @@
 import logger from "../../utils/logger.js";
 import { getContactName } from "../../utils/contacts.js";
-import { getDisplayName, parseJid, removeBotMention, replaceMentionsWithNames, simulateTypingAndSend, splitTextForChat, formatLLMMessage, getQuotedContext } from "../../utils/helpers.js";
-import { invokeAgent } from "../../agents/apiAgent.js";
+import {
+    getDisplayName,
+    parseJid,
+    removeBotMention,
+    replaceMentionsWithNames,
+    simulateTypingAndSend,
+    splitTextForChat,
+    getQuotedContext,
+    formatLLMMessageJSON
+} from "../../utils/helpers.js";
+import { invokeAgent } from "../../agents/api-agent.js";
 
 export async function textHandler(sock, msg) {
     const { remoteJid, participant: participantJid } = msg.key;
@@ -40,13 +49,13 @@ export async function textHandler(sock, msg) {
     const quotedBotJid = isGroup ? botLid : botId;
     const quotedContext = getQuotedContext(quotedMsg, quotedJid, sock.store.contacts, quotedBotJid);
 
-    const fullMessageContext = formatLLMMessage(senderName, messageText, quotedContext);
+    const fullMessageJSON = formatLLMMessageJSON(senderName, messageText, quotedContext);
 
     try {
-        const replyPromise = invokeAgent(remoteJid, senderJid, fullMessageContext, 2, true);
+        const replyPromise = invokeAgent(remoteJid, senderJid, fullMessageJSON, 2, true);
 
         (async () => {
-            await new Promise(resolve => setTimeout(resolve, 4000)); 
+            await new Promise(resolve => setTimeout(resolve, 4000));
             await sock.sendPresenceUpdate("composing", remoteJid);
         })();
 

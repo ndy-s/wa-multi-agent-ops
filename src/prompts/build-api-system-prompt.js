@@ -1,5 +1,5 @@
 import { config } from "../config/env.js";
-import { apiRegistry } from "../config/apiRegistry.js";
+import { apiRegistry } from "../config/api-registry.js";
 
 const formatFields = (fields) =>
     Object.entries(fields)

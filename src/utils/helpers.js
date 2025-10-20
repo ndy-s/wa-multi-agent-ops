@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { getContactName } from "../utils/contacts.js";
-import { apiAgentSchema } from "../schemas/apiAgentSchema.js";
+import {z} from "zod";
+import {getContactName} from "../utils/contacts.js";
+import {apiAgentSchema} from "../schemas/api-agent-schema.js";
 
 export function toWhatsappJid(number) {
     if (number.endsWith("@s.whatsapp.net") || number.endsWith("@g.us")) return number;
@@ -59,12 +59,21 @@ export function replaceMentionsWithNames(text, mentions = [], contacts = {}, bot
     return result;
 }
 
-export function formatLLMMessage(senderName, messageText, quotedContext = "") {
+export function formatLLMMessage(senderName, messageText, quotedContext) {
     return [
         `[User: ${senderName}]`,
         quotedContext,
         `Message: "${messageText}"`
     ].filter(Boolean).join("\n");
+}
+
+export function formatLLMMessageJSON(senderName, messageText, quotedContext) {
+    return {
+        sender: senderName,
+        content: messageText.trim(),
+        quotedContext: quotedContext.trim(),
+        timestamp: new Date().toISOString()
+    };
 }
 
 export function getQuotedContext(quotedMsg, quotedJid, contacts, botJid) {
@@ -200,4 +209,12 @@ export async function simulateTypingAndSend(sock, remoteJid, text, { quoted = nu
 
     // Small random pause after sending to mimic thinking
     await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700));
+}
+
+export function buildMemoryPrompt(shortTermMemory) {
+    return shortTermMemory
+        .map(m => {
+            return `${m.role.toUpperCase()}: ${m.content}`;
+        })
+        .join("\n");
 }

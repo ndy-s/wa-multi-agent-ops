@@ -38,7 +38,7 @@ export async function embedQuery(text) {
     const e = await getEmbedder();
     const tokens = await e(text);
     const vector = meanPooling(tokens);
-    logger.debug(`[embedQuery] vector length=${vector.length}`);
+    logger.info(`[embedQuery] vector length=${vector.length}`);
     return vector;
 }
 
@@ -50,7 +50,7 @@ export async function embedDocuments(texts) {
         const tokens = await e(text);
         const vector = meanPooling(tokens);
         embeddings.push(vector);
-        logger.debug(`[embedDocuments] text=${text.slice(0,50)} vectorLength=${vector.length}`);
+        logger.info(`[embedDocuments] text=${text.slice(0,50)} vectorLength=${vector.length}`);
     }
 
     return embeddings;

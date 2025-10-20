@@ -1,6 +1,6 @@
-import { textHandler } from "./textHandler.js";
-import { stickerHandler } from "./stickerHandler.js";
-import { reactionHandler } from "./reactionHandler.js";
+import { textHandler } from "./text-handler.js";
+import { stickerHandler } from "./sticker-handler.js";
+import { reactionHandler } from "./reaction-handler.js";
 import { config } from "../../config/env.js";
 import logger from "../../utils/logger.js"; 
 import { loadContacts, upsertContact } from "../../utils/contacts.js";
@@ -24,9 +24,6 @@ export async function handleMessage(sock, msg) {
     const messageType = msg?.message ? Object.keys(msg.message)[0] : null;
     if (!messageType) return;
 
-    sock.store.contacts = { ...loadContacts(), ...sock.store.contacts };
-    upsertContact(msg, sock);
-
     const preview = (() => {
         try {
             if (msg.message.conversation) return msg.message.conversation.slice(0, 100);
@@ -37,7 +34,11 @@ export async function handleMessage(sock, msg) {
         }
     })();
 
+    logger.info("──────────────────────────────");
     logger.info(`📩 Message from ${remoteJid} [${messageType}]: ${preview}`);
+
+    sock.store.contacts = { ...loadContacts(), ...sock.store.contacts };
+    upsertContact(msg, sock);
 
     const handler = handlers[messageType];
     if (handler) {

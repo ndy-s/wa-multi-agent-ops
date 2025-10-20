@@ -3,10 +3,10 @@ import path from "path";
 import crypto from "crypto";
 import logger from "./logger.js";
 import { embedder } from "../models/embedders/index.js";
-import { apiRegistry } from "../config/apiRegistry.js";
+import { apiRegistry } from "../config/api-registry.js";
 
 const DATA_DIR = path.resolve("./data");
-const EMBEDDINGS_FILE = path.join(DATA_DIR, "apiEmbeddings.json");
+const EMBEDDINGS_FILE = path.join(DATA_DIR, "api-embeddings.json");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(EMBEDDINGS_FILE)) {
@@ -47,7 +47,7 @@ function cosine(a, b) {
 
 export async function loadApiEmbeddings() {
     if (cachedEmbeddings) {
-        logger.debug(`[embedder] Returning cached embeddings (${cachedEmbeddings.length} APIs)`);
+        logger.info(`[embedder] Returning cached embeddings (${cachedEmbeddings.length} APIs)`);
         return cachedEmbeddings;
     }
 
@@ -79,7 +79,7 @@ export async function loadApiEmbeddings() {
     if (toEmbed.length > 0) {
         logger.info(`[embedder] ${toEmbed.length} APIs need new embeddings: ${toEmbed.map(t => t.id).join(", ")}`);
         const vectors = await embedder.embedDocuments(toEmbed.map(t => t.text));
-        logger.debug(`[embedder] Generated embeddings for ${vectors.length} APIs`);
+        logger.info(`[embedder] Generated embeddings for ${vectors.length} APIs`);
 
         toEmbed.forEach((t, i) => {
             existingMap[t.id] = {
@@ -111,7 +111,7 @@ export async function findRelevantApis(query, topN = 3) {
 
     const scored = apis.map(a => {
         const score = cosine(queryVec, a.embedding);
-        logger.debug(`[embedder] API=${a.id} score=${score.toFixed(4)}`);
+        logger.info(`[embedder] API=${a.id} score=${score.toFixed(4)}`);
         return { id: a.id, meta: a.meta, score };
     });
 

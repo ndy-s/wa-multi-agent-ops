@@ -28,12 +28,11 @@
     "@sqlitecloud/drivers": "^1.0.653",
     "@whiskeysockets/baileys": "^6.7.20",
     "@xenova/transformers": "^2.17.2",
+    "better-sqlite3": "^11.10.0",
     "chromadb": "^3.0.17",
     "dotenv": "^16.6.1",
     "luxon": "^3.7.2",
     "qrcode-terminal": "^0.12.0",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7",
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0",
     "zod": "^3.25.76"
