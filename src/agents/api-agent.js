@@ -77,7 +77,22 @@ export async function invokeAgent(remoteJid, userJid, fullMessageJSON, maxRetrie
 
             // 5. Save memory
             addMemory(userJid, "user", `[${fullMessageJSON.sender}] ${fullMessageJSON.content}`);
-            addMemory(userJid, "assistant", validated.content.message);
+            if (validated.type === "api_action") {
+                const apiSummaries = (validated.content.apis || []).map(a => {
+                    const msgPart = validated.content.message ? `, Message: ${validated.content.message}` : "";
+                    return `API: ${a.id}, Params: ${JSON.stringify(a.params)}${msgPart}`;
+                });
+
+                const memoryEntry = apiSummaries.length > 0
+                    ? apiSummaries.join(" | ")
+                    : (validated.content.message || "[API action with no details]");
+
+                addMemory(userJid, "assistant", memoryEntry);
+            } else if (validated.type === "message") {
+                addMemory(userJid, "assistant", validated.content.message || "[Empty message]");
+            } else {
+                addMemory(userJid, "assistant", "[Unexpected response type]");
+            }
 
             // 6. Gather token info
             const tokenUsage = res?.response_metadata?.tokenUsage || res?.usage_metadata || {};

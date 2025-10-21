@@ -14,62 +14,65 @@ export const apiRegistry = {
                     "KTA-PREMIUM": "13030009001002",
                     "KTA-PAYROLL": "13030009001012"
                 },
-                instructions: "Map product name to prdCode. Required."
+                instructions: "Product code for the selected product type."
             },
             custNo: {
-                required: true,
+                required: false,
                 type: "string",
-                instructions: "Customer number, must be provided."
+                instructions: "Customer number (CIX No), 10 digits. Padded if shorter. Backend assigns a random customer if omitted."
             },
             lonTerm: {
-                required: true,
+                required: false,
                 type: "string",
-                instructions: "Loan term in months. Required."
+                enum: ["3","6","9","12","24","36","48","60"],
+                instructions: "Loan term in months. Limits: QC-GENERAL 3–6, QC-PREMIUM 3–12, KTA-GENERAL 3–6, KTA-PREMIUM 6–60. Backend assigns max if omitted."
             },
             repayPlan: {
-                required: true,
+                required: false,
                 type: "string",
-                enum: ["MONTHLY", "QUARTERLY"],
-                instructions: "Repayment plan must be one of MONTHLY or QUARTERLY."
+                enum: ["3","6","9","12","24","36","48","60"],
+                instructions: "Repayment plan in months. Product limits: QC-GENERAL (3–6), QC-PREMIUM (3–36), KTA-GENERAL (3–6), KTA-PREMIUM (6–60). Backend assigns the maximum if omitted."
             },
             limitAmt: {
-                required: true,
+                required: false,
                 type: "string",
-                instructions: "Loan limit amount."
+                instructions: "Maximum loan. GENERAL ≤ 4,900,000; PREMIUM ≤ 100,000,000. Backend assigns max if omitted."
             },
             riskSeg: {
                 required: false,
                 type: "string",
-                instructions: "Optional: risk segment code."
+                enum: ["SEG01", "SEG02", "SEG03"],
+                instructions: "Risk segment. Backend defaults to SEG01 if omitted."
             },
             grade: {
                 required: false,
                 type: "string",
-                instructions: "Optional: customer grade."
+                enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+                instructions: "Customer grade. Backend defaults to 1 if omitted."
             },
             groupCd: {
                 required: false,
                 type: "string",
-                instructions: "Optional: group code."
+                instructions: "3-digit area code. Backend defaults to 001 if omitted."
             },
             excludeStep: {
                 required: false,
                 type: "array",
                 enum: ["SAVE", "CONT", "VERI"],
-                instructions: "List of process steps to exclude during API execution."
+                instructions: "Optional steps to skip."
             }
         },
         examples: [
             {
-                input: "Create QC-GENERAL loan for customer 12345 with 12 months, monthly repayment, 5,000,000 limit",
+                input: "Create a QC-PREMIUM loan for customer 12345 with 12-month term, repayment plan 12, and limit of 5,000,000.",
                 output: {
                     id: "LNO8888C.SVC",
                     params: {
-                        prdCode: "11010009001001",
-                        custNo: "12345",
+                        prdCode: "11010009001002",
+                        custNo: "0000012345",
                         lonTerm: "12",
-                        repayPlan: "MONTHLY",
-                        limitAmt: "5000000"
+                        repayPlan: "12",
+                        limitAmt: "5000000",
                     }
                 }
             }
@@ -90,12 +93,12 @@ export const apiRegistry = {
                     "KTA-INCREASE-LIMIT": "32",
                     "QC-INCREASE-LIMIT": "33"
                 },
-                instructions: "Map product name to pgmType."
+                instructions: "Program type code mapped from product name."
             },
             refNo: {
                 required: true,
                 type: "string",
-                instructions: "Reference number must start with 1188."
+                instructions: "Reference number, 16 digits, starting with '1188'."
             }
         },
         examples: [
