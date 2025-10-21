@@ -17,7 +17,7 @@ export class AgentBase {
     async invoke(remoteJid, userJid, fullMessageJSON, maxRetries = 2) {
         let retry = 0, lastErrors = {}, lastContent = "";
         const memory = getRecentMemory(userJid);
-        const { systemPrompt, memoryPrompt, userMessage } = await this.buildPrompt(userJid, fullMessageJSON, memory);
+        const { systemPrompt, memoryPrompt, userMessage } = await this.buildPrompt(fullMessageJSON, memory);
 
         while (retry <= maxRetries) {
             const messages = [

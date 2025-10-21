@@ -4,7 +4,7 @@ import { findRelevantApis } from "../../helpers/api-embeddings.js";
 import { config } from "../../config/env.js";
 import logger from "../../helpers/logger.js";
 
-export async function buildApiPrompt(userJid, msgJSON, memory) {
+export async function buildApiPrompt(msgJSON, memory) {
     const userMessage = formatLLMMessage(msgJSON.sender, msgJSON.content, msgJSON.quotedContext);
     let systemPrompt;
 
@@ -12,7 +12,7 @@ export async function buildApiPrompt(userJid, msgJSON, memory) {
         const context = [...memory.map(m => `[${m.role}] ${m.content}`), userMessage].join(" ");
         const relevant = await findRelevantApis(context, config.embeddingLimit);
         systemPrompt = relevant.length ? buildDynamicApiPrompt(relevant) : apiRegistryPrompt();
-        logger.info(`[ApiAgent] Using ${relevant.length ? "dynamic" : "default"} API prompt`);
+        logger.info(`[apiAgent] Using ${relevant.length ? "dynamic" : "default"} API prompt`);
     } else {
         systemPrompt = apiRegistryPrompt();
     }
