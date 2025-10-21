@@ -3,9 +3,6 @@ import logger from "../utils/logger.js";
 
 export async function callApi(api, params) {
     try {
-        console.log("call api", api);
-        return;
-
         const res = await fetch(api.url, {
             method: api.method,
             headers: { "Content-Type": "application/json" },
