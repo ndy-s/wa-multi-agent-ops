@@ -1,7 +1,7 @@
 import { config } from "../config/env.js";
 import { apiRegistry } from "../config/api-registry.js";
 
-const formatFields = (fields) =>
+const formatApiFields = (fields) =>
     Object.entries(fields)
     .map(([key, value]) => {
         let line = `- **${key}** (${value.type})${value.required ? " [required]" : " [optional]"}: ${value.instructions}`;
@@ -11,7 +11,7 @@ const formatFields = (fields) =>
     })
     .join("\n");
 
-const formatExamples = (examples) =>
+const formatApiExamples = (examples) =>
     (examples || [])
     .map((ex, i) => `
 Example ${i + 1}:
@@ -34,12 +34,12 @@ ${JSON.stringify({
     },
 }, null, 2)}`).join("\n");
 
-const buildApiPrompt = (apis) => {
+const buildApiSystemPrompt = (apis) => {
     const apiInstructions = apis
     .map(({ id, meta }) => `
 ### ${id || ""} - ${meta.description}
-${formatFields(meta.fields)}
-${meta.examples?.length ? formatExamples(meta.examples) : ""}`)
+${formatApiFields(meta.fields)}
+${meta.examples?.length ? formatApiExamples(meta.examples) : ""}`)
     .join("\n");
 
     return `
@@ -66,9 +66,16 @@ ${apiInstructions}
 `;
 };
 
-export const buildApiSystemPrompt = () => buildApiPrompt(
+export const apiRegistryPrompt = () => buildApiSystemPrompt(
     Object.entries(apiRegistry).map(([id, meta]) => ({ id, meta }))
 );
 
-export const buildDynamicApiSystemPrompt = (relevantApis) => buildApiPrompt(relevantApis);
+export const buildDynamicApiPrompt = (relevantApis) => buildApiSystemPrompt(relevantApis);
 
+export function buildMemoryPrompt(shortTermMemory) {
+    return shortTermMemory
+        .map(m => {
+            return `${m.role.toUpperCase()}: ${m.content}`;
+        })
+        .join("\n");
+}

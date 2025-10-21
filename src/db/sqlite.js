@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import DatabaseLocal from "better-sqlite3";
 import { Database as DatabaseCloud } from "@sqlitecloud/drivers";
-import logger from "../utils/logger.js";
+import logger from "../helpers/logger.js";
 import { config } from "../config/env.js";
 
 let dbLocalInstance = null;

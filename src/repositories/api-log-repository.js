@@ -1,5 +1,5 @@
 import { openDB } from "../db/sqlite.js";
-import logger from "../utils/logger.js";
+import logger from "../helpers/logger.js";
 import { config } from "../config/env.js";
 
 export async function saveApiLog(logData) {

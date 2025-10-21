@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import logger from "../utils/logger.js";
+import logger from "../helpers/logger.js";
 
 export async function callApi(api, params) {
     try {

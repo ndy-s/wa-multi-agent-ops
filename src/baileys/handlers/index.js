@@ -2,8 +2,8 @@ import { textHandler } from "./text-handler.js";
 import { stickerHandler } from "./sticker-handler.js";
 import { reactionHandler } from "./reaction-handler.js";
 import { config } from "../../config/env.js";
-import logger from "../../utils/logger.js"; 
-import { loadContacts, upsertContact } from "../../utils/contacts.js";
+import logger from "../../helpers/logger.js";
+import { loadContacts, upsertContact } from "../../helpers/contacts.js";
 
 const handlers = {
     conversation: textHandler,

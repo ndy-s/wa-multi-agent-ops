@@ -1,18 +1,14 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { model } from "../models/deepseek.js";
-import { buildApiSystemPrompt, buildDynamicApiSystemPrompt } from "../prompts/build-api-system-prompt.js";
-import {
-    parseAndValidateResponse,
-    extractValidationErrors,
-    buildMemoryPrompt,
-    formatLLMMessage
-} from "../utils/helpers.js";
+import { model } from "../models/llms/deepseek.js";
 import { addMemory, getRecentMemory } from "../memory/memory-store.js";
-import { findRelevantApis } from "../utils/api-embeddings.js";
 import { DateTime } from "luxon";
-import logger from "../utils/logger.js";
 import { saveApiLog} from "../repositories/api-log-repository.js";
 import { config } from "../config/env.js";
+import { formatLLMMessage } from "../helpers/llm.js";
+import logger from "../helpers/logger.js";
+import { findRelevantApis } from "../helpers/api-embeddings.js";
+import { extractValidationErrors, parseAndValidateResponse } from "../helpers/validation.js";
+import { apiRegistryPrompt, buildDynamicApiPrompt, buildMemoryPrompt } from "../helpers/prompts.js";
 
 const jakartaTime = () => DateTime.now().setZone("Asia/Jakarta").toISO();
 
@@ -31,14 +27,14 @@ export async function invokeAgent(remoteJid, userJid, fullMessageJSON, maxRetrie
         const fullContext = [...shortTermMemory.map(m => `[${m.role}] ${m.content}`), userMessage].join(" ");
         const relevant = await findRelevantApis(fullContext, config.embeddingLimit);
         if (relevant.length) {
-            systemPrompt = buildDynamicApiSystemPrompt(relevant);
+            systemPrompt = buildDynamicApiPrompt(relevant);
             logger.info(`[invokeAgent] Using dynamic prompt for APIs: ${relevant.map(r => r.id).join(", ")}`);
         } else {
-            systemPrompt = buildApiSystemPrompt();
+            systemPrompt = apiRegistryPrompt();
             logger.info(`[invokeAgent] No relevant APIs found, using default prompt`);
         }
     } else {
-        systemPrompt = buildApiSystemPrompt();
+        systemPrompt = apiRegistryPrompt();
     }
 
     // 2. Memory prompt (combine user/assistant history)

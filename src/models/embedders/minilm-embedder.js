@@ -1,5 +1,5 @@
 import { pipeline } from "@xenova/transformers";
-import logger from "../../utils/logger.js";
+import logger from "../../helpers/logger.js";
 
 let embedderPipeline = null;
 

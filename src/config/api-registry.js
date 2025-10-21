@@ -47,7 +47,7 @@ export const apiRegistry = {
             grade: {
                 required: false,
                 type: "string",
-                enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+                enum: ["1","2","3","4","5","6","7","8","9","10"],
                 instructions: "Customer grade. Backend defaults to 1 if omitted."
             },
             groupCd: {
@@ -85,7 +85,7 @@ export const apiRegistry = {
             pgmType: {
                 required: true,
                 type: "string",
-                enum: ["11", "12", "31", "32", "33"],
+                enum: ["11","12","31","32","33"],
                 mapping: {
                     "QC-EXTEND": "11",
                     "KTA-REPEAT": "12",

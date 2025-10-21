@@ -1,5 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { config } from "../config/env.js";
+import { config } from "../../config/env.js";
 
 export const model = new ChatOpenAI({
     temperature: 0,

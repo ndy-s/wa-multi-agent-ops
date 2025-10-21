@@ -1,16 +1,10 @@
-import logger from "../../utils/logger.js";
-import { getContactName } from "../../utils/contacts.js";
-import {
-    getDisplayName,
-    parseJid,
-    removeBotMention,
-    replaceMentionsWithNames,
-    simulateTypingAndSend,
-    splitTextForChat,
-    getQuotedContext,
-    formatLLMMessageJSON
-} from "../../utils/helpers.js";
 import { invokeAgent } from "../../agents/api-agent.js";
+import logger from "../../helpers/logger.js";
+import { getContactName } from "../../helpers/contacts.js";
+import { getDisplayName, parseJid, removeBotMention } from "../../helpers/whatsapp.js";
+import { getQuotedContext, replaceMentionsWithNames } from "../../helpers/mentions.js";
+import { formatLLMMessageJSON, splitTextForChat } from "../../helpers/llm.js";
+import { simulateTypingAndSend } from "../../helpers/simulate.js";
 
 export async function textHandler(sock, msg) {
     const { remoteJid, participant: participantJid } = msg.key;

@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import logger from "./logger.js";
-import { getDisplayName } from "./helpers.js";
+import { getDisplayName } from "./whatsapp.js";
 
 const CONTACTS_DIR = path.resolve("./data");
 const CONTACTS_FILE = path.join(CONTACTS_DIR, "contacts.json");

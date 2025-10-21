@@ -6,7 +6,7 @@ import makeWASocket, {
 import qrcode from "qrcode-terminal";
 import fs from "fs";
 import path from "path";
-import logger from "../utils/logger.js";
+import logger from "../helpers/logger.js";
 import { handleMessage } from "./handlers/index.js";
 import { openDB } from "../db/sqlite.js";
 
