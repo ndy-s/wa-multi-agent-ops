@@ -1,11 +1,10 @@
-import { invokeAgent } from "../../agents/api-agent.js";
 import logger from "../../helpers/logger.js";
 import { getContactName } from "../../helpers/contacts.js";
 import { getDisplayName, parseJid, removeBotMention } from "../../helpers/whatsapp.js";
 import { getQuotedContext, replaceMentionsWithNames } from "../../helpers/mentions.js";
 import { formatLLMMessageJSON, splitTextForChat } from "../../helpers/llm.js";
 import { simulateTypingAndSend } from "../../helpers/simulate.js";
-import {getAgent} from "../../agents/index.js";
+import { getAgent } from "../../agents/index.js";
 
 export async function textHandler(sock, msg) {
     const { remoteJid, participant: participantJid } = msg.key;
@@ -46,18 +45,20 @@ export async function textHandler(sock, msg) {
 
     const fullMessageJSON = formatLLMMessageJSON(senderName, messageText, quotedContext);
 
+    const presenceTimeout = setTimeout(async () => {
+        await sock.sendPresenceUpdate("composing", remoteJid);
+    }, 3000);
+
     try {
-        // const replyPromise = invokeAgent(remoteJid, senderJid, fullMessageJSON);
-        const agent = getAgent("api");
-        const replyPromise = agent.invoke(remoteJid, senderJid, fullMessageJSON);
+        const agent = await getAgent("api");
+        if (!agent) {
+            await sock.sendMessage(remoteJid, {
+                text: "Sorry, the AI is temporarily unavailable. Please try again later",
+            }, { quoted: msg });
+            return;
+        }
 
-        (async () => {
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            await sock.sendPresenceUpdate("composing", remoteJid);
-        })();
-
-        const replies = await replyPromise; 
-
+        const replies = await agent.invoke(remoteJid, senderJid, fullMessageJSON);
         for (const reply of replies) {
             const chunks = splitTextForChat(reply, 50);
 
@@ -72,21 +73,17 @@ export async function textHandler(sock, msg) {
 
         logger.info(`✅ Replied to ${remoteJid}: ${replies.map(r => r.slice(0, 100)).join(" | ")}`);
     } catch (err) {
+        clearTimeout(presenceTimeout);
         logger.error(`❌ Error processing message from ${remoteJid}:`, err);
 
-        try {
+        if (msg) {
             await sock.sendMessage(remoteJid, {
-                text: "⚠️ Sorry, something went wrong processing your message.",
-            });
-        } catch (sendErr) {
-            logger.error(`❌ Failed to send error message to ${remoteJid}:`, sendErr);
+                text: "Sorry, something went wrong processing your message",
+            }, { quoted: msg });
         }
     } finally {
-        try {
-            await sock.sendPresenceUpdate("paused", remoteJid);
-        } catch (presenceErr) {
-            logger.warn(`⚠️ Failed to reset presence for ${remoteJid}:`, presenceErr);
-        }
+        clearTimeout(presenceTimeout);
+        await sock.sendPresenceUpdate("paused", remoteJid);
     }
 }
 

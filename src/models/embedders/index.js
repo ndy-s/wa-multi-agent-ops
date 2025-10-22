@@ -9,5 +9,4 @@ const embedders = {
 
 export const embedder = embedders[config.embeddingModel] || minilm;
 
-console.log(`[embedder] Using embedding model: ${config.embeddingModel || "minilm"}`);
-
+console.log(`[embedder] ${config.useEmbedding ? `Using embedding model: ${config.embeddingModel || "minilm"}` : "Embeddings disabled"}`);

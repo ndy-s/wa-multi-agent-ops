@@ -1,7 +1,6 @@
-
-export const apiRegistry = {
+export const registry = {
     "LNO8888C.SVC": {
-        description: "Loan creation API",
+        description: "Loan Creation API. Create a loan for a customer.",
         fields: {
             prdCode: {
                 required: true,
@@ -80,7 +79,7 @@ export const apiRegistry = {
     },
 
     "LNO8888D.SVC": {
-        description: "Portfolio manipulation API",
+        description: "Portfolio manipulation API. e.g., extend contract validity.",
         fields: {
             pgmType: {
                 required: true,
@@ -103,11 +102,11 @@ export const apiRegistry = {
         },
         examples: [
             {
-                input: "Extend portfolio for customer 12345",
+                input: "QC Increase Limit for customer 12345",
                 output: {
                     id: "LNO8888D.SVC",
                     params: {
-                        pgmType: "11",
+                        pgmType: "33",
                         refNo: "118812345"
                     }
                 }

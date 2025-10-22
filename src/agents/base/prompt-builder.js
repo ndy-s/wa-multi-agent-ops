@@ -1,5 +1,5 @@
-import { config } from "../config/env.js";
-import { apiRegistry } from "../config/api-registry.js";
+import { config } from "../../config/env.js";
+import { registry } from "../api-agent/registry.js";
 
 const formatApiFields = (fields) =>
     Object.entries(fields)
@@ -67,7 +67,7 @@ ${apiInstructions}
 };
 
 export const apiRegistryPrompt = () => buildApiSystemPrompt(
-    Object.entries(apiRegistry).map(([id, meta]) => ({ id, meta }))
+    Object.entries(registry).map(([id, meta]) => ({ id, meta }))
 );
 
 export const buildDynamicApiPrompt = (relevantApis) => buildApiSystemPrompt(relevantApis);

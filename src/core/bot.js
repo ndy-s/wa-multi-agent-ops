@@ -9,11 +9,11 @@ import path from "path";
 import logger from "../helpers/logger.js";
 import { handleMessage } from "./handlers/index.js";
 import { openDB } from "../db/sqlite.js";
+import {enqueueMessage} from "../helpers/queue.js";
 
 const AUTH_INFO_PATH = path.join(process.cwd(), "auth_info");
 
 const store = { contacts: {} };
-const messageQueues = new Map();
 
 export async function startBot() {
     await openDB();
@@ -71,12 +71,10 @@ export async function startBot() {
         for (const msg of m.messages) {
             if (!msg.message || msg.key.fromMe) continue;
 
-            try {
+            const chatId = msg.key.remoteJid;
+            enqueueMessage(chatId, async () => {
                 await handleMessage(sock, msg);
-            } catch (error) {
-                logger.error(`Error processing message from ${msg.key.remoteJid}:`, error);
-            }
+            });
         }
     });
-
 }

@@ -1,4 +1,3 @@
-import { apiAgentSchema } from "../schemas/api-agent-schema.js";
 import { z } from "zod";
 
 export function extractValidationErrors(err) {
@@ -16,7 +15,6 @@ export function extractValidationErrors(err) {
             } else if (e.issues) {
                 flattenErrors(e.issues, parentPath);
             } else {
-                // Classify errors (you can adjust based on Zod error codes)
                 if (e.code === 'invalid_type' || e.code === 'custom') {
                     invalidFields.add(`${currentPath} (${e.message})`);
                 } else if (e.code === 'invalid_literal' || e.code === 'invalid_enum_value' || e.code === 'required') {
@@ -36,10 +34,10 @@ export function extractValidationErrors(err) {
     };
 }
 
-export function parseAndValidateResponse(content) {
+export function parseAndValidateResponse(content, schema) {
     try {
         const parsed = JSON.parse(content);
-        return apiAgentSchema.parse(parsed);
+        return schema.parse(parsed);
     } catch (err) {
         if (err instanceof SyntaxError) throw new Error(`JSON parsing error: ${err.message}`);
         if (err instanceof z.ZodError) throw err;

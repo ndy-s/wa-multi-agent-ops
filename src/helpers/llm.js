@@ -1,4 +1,3 @@
-
 export function formatLLMMessage(senderName, messageText, quotedContext) {
     return [
         `[User: ${senderName}]`,

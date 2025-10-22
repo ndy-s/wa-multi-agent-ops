@@ -3,7 +3,7 @@ import { config } from "../../config/env.js";
 
 const client = new OpenAIEmbeddings({
     model: "text-embedding-3-small",
-    apiKey: config.openaiApiKey,
+    apiKey: config.openaiApiKeys[0],
 });
 
 export async function embedQuery(text) {

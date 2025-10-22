@@ -1,6 +1,6 @@
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
 import logger from "../../helpers/logger.js";
-import { parseAndValidateResponse, extractValidationErrors } from "../../helpers/validation.js";
+import { parseAndValidateResponse, extractValidationErrors } from "./response-validator.js";
 import { addMemory, getRecentMemory } from "../../memory/memory-store.js";
 import { saveApiLog } from "../../repositories/api-log-repository.js";
 import { jakartaTime, summarizeTokens } from "./utils.js";
@@ -34,7 +34,14 @@ export class AgentBase {
                 logger.info(`[${this.id}] Calling model`);
                 const res = await this.model.invoke(messages);
                 const content = typeof res.content === "string" ? res.content.trim() : res.content;
-                if (!content) return ["Empty model response."];
+
+                if (!content || (typeof content === "string" && content.length === 0)) {
+                    retry++;
+                    logger.error(`[${this.id}] Empty model response, retrying (#${retry})`);
+                    lastErrors = { error: "Empty model response" };
+
+                    continue;
+                }
 
                 lastContent = content;
 
@@ -44,7 +51,7 @@ export class AgentBase {
                 addMemory(userJid, "user", `[${fullMessageJSON.sender}] ${fullMessageJSON.content}`);
                 addMemory(userJid, "assistant", validated.content.message || "[No message]");
 
-                const meta = summarizeTokens(res);
+                const meta = summarizeTokens(res, this.model);
                 await saveApiLog({
                     chatId: remoteJid,
                     userId: userJid,
@@ -61,6 +68,11 @@ export class AgentBase {
                 return this.handleResult(validated);
 
             } catch (err) {
+                if (err.code === 429) {
+                    logger.error(`[${this.id}] Rate limit reached for free model: ${err.message}`);
+                    return ["Sorry, the AI is temporarily unavailable. Please try again later"];
+                }
+
                 retry++;
                 lastErrors = err.name === "ZodError" ? extractValidationErrors(err, true) : { error: err.message };
                 logger.warn(`[${this.id}] Retry #${retry} failed:`, lastErrors);

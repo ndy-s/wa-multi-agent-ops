@@ -1,15 +1,20 @@
 import "dotenv/config";
 
 const required = [
-    "OPENAI_API_KEY",
-    "OPENROUTER_API_KEY",
+    "OPENROUTER_API_KEYS",
     "OPENROUTER_BASE_URL",
 ];
 
 const sqliteType = process.env.SQLITE_TYPE || "local";
-if (sqliteType === "cloud" && !process.env.SQLITE_URL) {config
-    console.error(`❌ Missing required environment variable for cloud SQLite: SQLITE_URL`);
-    process.exit(1);
+const useEmbedding = process.env.USE_EMBEDDING === "true";
+const embeddingModel = process.env.EMBEDDING_MODEL || "minilm";
+
+// Conditional requirements
+if (sqliteType === "cloud") {
+    required.push("SQLITE_URL");
+}
+if (useEmbedding && embeddingModel.toLowerCase().includes("gpt3")) {
+    required.push("OPENAI_API_KEYS");
 }
 
 for (const key of required) {
@@ -19,19 +24,29 @@ for (const key of required) {
     }
 }
 
+const parseEnvList = (value) => (value || "")
+    .split(",")
+    .map(v => v.trim())
+    .filter(Boolean);
+
 export const config = {
-    whitelist: process.env.WHITELIST ? process.env.WHITELIST.split(",").map((id) => id.trim()) : [],
+    whitelist: parseEnvList(process.env.WHITELIST),
 
     llmLocale: process.env.LLM_LOCALE || "en-US",
-    useEmbedding: process.env.USE_EMBEDDING === "true",
+    useEmbedding,
     embeddingLimit: parseInt(process.env.EMBEDDING_LIMIT || "3", 10),
-    embeddingModel: process.env.EMBEDDING_MODEL || "minilm",
+    embeddingModel,
 
     sqliteType,
     sqliteUrl: process.env.SQLITE_URL,
 
-    openaiApiKey: process.env.OPENAI_API_KEY,
+    openaiApiKeys: parseEnvList(process.env.OPENAI_API_KEYS),
+    googleaiApiKeys: parseEnvList(process.env.GOOGLEAI_API_KEYS),
 
-    openrouterApiKey: process.env.OPENROUTER_API_KEY,
+    openrouterApiKeys: parseEnvList(process.env.OPENROUTER_API_KEYS),
     openrouterBaseUrl: process.env.OPENROUTER_BASE_URL,
 };
+
+console.log(
+    `[config] Loaded ${config.openaiApiKeys.length} OpenAI key(s), ${config.googleaiApiKeys.length} GoogleAI key(s), and ${config.openrouterApiKeys.length} OpenRouter key(s)`
+);
