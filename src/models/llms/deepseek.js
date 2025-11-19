@@ -15,57 +15,57 @@ export function createDeepseekModel(apiKey) {
 }
 
 export async function hasQuota(apiKey) {
+    return true;
+
     const keySuffix = apiKey.slice(-3);
-    const targetModel = "tngtech/deepseek-r1t2-chimera";
+    const DAILY_LIMIT = 50;
 
     try {
         const keysResp = await fetch("https://openrouter.ai/api/internal/v1/api-keys", {
             headers: { Authorization: `Bearer ${apiKey}` },
         });
-        const keysData = await keysResp.json();
 
-        const keyInfo = keysData.data.find(k => k.label.slice(-3) === keySuffix);
-        if (!keyInfo) {
-            logger.warn(`API key not found (suffix match): ${keySuffix}`);
+        const keysData = await keysResp.json();
+        const keyList = keysData?.data || [];
+
+        if (!keyList.length) {
+            logger.warn(`No API keys found for suffix: ${keySuffix}`);
             return false;
         }
 
-        const keyId = keyInfo.id;
+        const keyIds = keyList.map(k => k.id).join(",");
 
         const usageResp = await fetch(
-            `https://openrouter.ai/api/frontend/user/transaction-analytics?api_key_ids=${keyId}&window=1mo`,
-            {
-                headers: { Authorization: `Bearer ${apiKey}` },
-            }
+            `https://openrouter.ai/api/frontend/user/transaction-analytics?api_key_ids=${keyIds}&window=1mo`,
+            { headers: { Authorization: `Bearer ${apiKey}` } }
         );
+
         const usageData = await usageResp.json();
+        const usageList = usageData?.data?.data || [];
 
-        const usageList = usageData.data?.data || [];
-
-        if (usageList.length === 0) {
-            logger.info(`No usage yet for API key suffix: ${keySuffix}, model: ${targetModel}`);
+        if (!usageList.length) {
+            logger.info(`No usage data yet for keys ending with: ${keySuffix}`);
             return true;
         }
 
-        const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-        const todayUsage = usageList.find(
-            u => u.date.startsWith(today) && u.model_permaslug === targetModel
-        );
+        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const todayUsages = usageList.filter(u => u.date.startsWith(today));
 
-        if (!todayUsage) {
-            logger.info(`No usage today for API key suffix: ${keySuffix}, model: ${targetModel}`);
-            return true;
-        }
+        const totalRequests = todayUsages.reduce((sum, u) => sum + (u.requests || 0), 0);
 
-        if (todayUsage.requests >= 50) {
-            logger.warn(`API key suffix ${keySuffix} has reached the daily free tier limit (50 requests) for model: ${targetModel}`);
+        if (totalRequests >= DAILY_LIMIT) {
+            logger.warn(
+                `Total usage reached (${totalRequests}/${DAILY_LIMIT}) for API key suffix ${keySuffix}`
+            );
             return false;
         }
 
-        logger.info(`API key suffix ${keySuffix} has ${50 - todayUsage.requests} requests remaining today for model: ${targetModel}`);
+        logger.info(
+            `API key suffix ${keySuffix} has ${DAILY_LIMIT - totalRequests} requests remaining today`
+        );
         return true;
     } catch (err) {
-        logger.error(`Error checking quota for API key suffix ${keySuffix}, model: ${modelPermaSlug}`, err);
+        logger.error(`Error checking quota for API key suffix ${keySuffix}:`, err);
         return false;
     }
 }

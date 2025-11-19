@@ -1,6 +1,5 @@
 import * as deepseek from "./deepseek.js";
 import * as gemini from "./gemini.js";
-import logger from "../../helpers/logger.js";
 
 const models = { deepseek, gemini };
 
