@@ -1,12 +1,10 @@
 import logger from "../../helpers/logger.js";
 import { pendingAgentActions } from "../../agents/base/utils.js";
-import { apiRegistry } from "../../agents/api-agent/registry.js";
-import { sqlRegistry } from "../../agents/sql-agent/registry.js";
 import { callApi } from "../../services/api-service.js";
 import { callSql } from "../../services/sql-service.js";
 
 export async function reactionHandler(sock, msg) {
-       try {
+    try {
         const reaction = msg.message.reactionMessage;
         if (!reaction) return;
 
@@ -43,14 +41,8 @@ export async function reactionHandler(sock, msg) {
         let result;
         try {
             if (actionType === "api") {
-                const apiMeta = apiRegistry[id];
-                if (!apiMeta) throw new Error(`Unknown API ID: ${id}`);
-
                 result = await callApi(id, params);
             } else if (actionType === "sql") {
-                const sqlMeta = sqlRegistry[id];
-                if (!sqlMeta) throw new Error(`Unknown SQL ID: ${id}`);
-
                 result = await callSql(query, params);
             } else {
                 throw new Error(`Unknown pending action type: ${actionType}`);

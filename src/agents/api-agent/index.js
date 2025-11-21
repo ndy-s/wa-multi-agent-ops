@@ -2,11 +2,8 @@ import { AgentBase } from "../base/AgentBase.js";
 import { apiAgentSchema } from "./schema.js";
 import { buildApiPrompt } from "./prompt.js";
 import { handleApiResult } from "./handler.js";
-import { ModelManager } from "../../models/llms/ModelManager.js";
 
-const modelManager = new ModelManager(["deepseek", "gemini"]);
-
-export async function getApiAgent() {
+export async function getApiAgent(modelManager) {
     const model = await modelManager.getModel();
     if (!model) return null;
 

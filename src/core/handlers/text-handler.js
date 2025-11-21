@@ -2,9 +2,9 @@ import logger from "../../helpers/logger.js";
 import { getContactName } from "../../helpers/contacts.js";
 import { getDisplayName, parseJid, removeBotMention } from "../../helpers/whatsapp.js";
 import { getQuotedContext, replaceMentionsWithNames } from "../../helpers/mentions.js";
-import { formatLLMMessageJSON } from "../../helpers/llm.js";
+import {detectAgentByKeywords, formatLLMMessageJSON} from "../../helpers/llm.js";
 import { getAgent } from "../../agents/index.js";
-import { sendChunkedMessage, sendPendingAction } from "../../helpers/message.js";
+import { sendChunkedMessage, sendClassifierTip, sendPendingAction } from "../../helpers/message.js";
 
 export async function textHandler(sock, msg) {
     const { remoteJid, participant: participantJid } = msg.key;
@@ -45,16 +45,28 @@ export async function textHandler(sock, msg) {
 
     const fullMessageJSON = formatLLMMessageJSON(senderName, messageText, quotedContext);
 
-    const classifier = await getAgent("classifier");
-    if (!classifier) {
-        await sock.sendMessage(remoteJid, {
-            text: "Sorry, the AI is temporarily unavailable. Please try again later",
-        }, { quoted: msg });
-        return;
-    }
+    // Select agent
+    let selectedAgent = detectAgentByKeywords(messageText);
+    let confidence = 1;
 
-    const { agent: selectedAgent, confidence } = await classifier.invoke(remoteJid, senderJid, fullMessageJSON);
-    logger.info(`🔎 Classifier chose agent=${selectedAgent}, confidence=${confidence}`);
+    if (!selectedAgent) {
+        const classifier = await getAgent("classifier");
+        if (!classifier) {
+            await sock.sendMessage(remoteJid, {
+                text: "Sorry, the AI is temporarily unavailable. Please try again later",
+            }, { quoted: msg });
+            return;
+        }
+
+        const classifierResult = await classifier.invoke(remoteJid, senderJid, fullMessageJSON);
+        selectedAgent = classifierResult.agent;
+        confidence = classifierResult.confidence;
+
+        logger.info(`🔎 Classifier chose agent=${selectedAgent}, confidence=${confidence}`);
+        await sendClassifierTip(sock, msg, remoteJid, selectedAgent);
+    } else {
+        logger.info(`🔎 Manual keyword detected, routing to agent=${selectedAgent}`);
+    }
 
     const presenceTimeout = setTimeout(async () => {
         await sock.sendPresenceUpdate("composing", remoteJid);
@@ -79,12 +91,10 @@ export async function textHandler(sock, msg) {
             for (const action of result.actions) {
                 await sendPendingAction(sock, msg, selectedAgent, remoteJid, senderJid, action, i++);
             }
-            return;
         } else if (result.type === "text") {
             for (const reply of result.messages) {
                 await sendChunkedMessage(sock, remoteJid, msg, reply);
             }
-            return;
         }
     } catch (err) {
         clearTimeout(presenceTimeout);

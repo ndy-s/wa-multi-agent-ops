@@ -8,15 +8,17 @@ import fs from "fs";
 import path from "path";
 import logger from "../helpers/logger.js";
 import { handleMessage } from "./handlers/index.js";
-import { openDB } from "../db/sqlite.js";
-import {enqueueMessage} from "../helpers/queue.js";
+import { openSqliteDB } from "../db/sqlite.js";
+import { enqueueMessage } from "../helpers/queue.js";
+import { openOracleDB } from "../db/oracle.js";
 
 const AUTH_INFO_PATH = path.join(process.cwd(), "auth_info");
 
 const store = { contacts: {} };
 
 export async function startBot() {
-    await openDB();
+    await openSqliteDB();
+    await openOracleDB();
 
     const { state, saveCreds } = await useMultiFileAuthState("auth_info");
     const { version } = await fetchLatestBaileysVersion();

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ops Agent Logs Viewer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Ops Agent Logs Viewer</h1>
+
+<div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search chat, user, model, or content..." />
+    <button onclick="loadLogs(0)">Search</button>
+</div>
+
+<div id="loading"></div>
+
+<div class="table-container">
+    <table id="logTable">
+        <thead>
+        <tr>
+            <th data-key="id">ID</th>
+            <th data-key="chat_id">Chat ID</th>
+            <th data-key="user_id">User ID</th>
+            <th data-key="system_prompt">System Prompt</th>
+            <th data-key="memory_prompt">Memory Prompt</th>
+            <th data-key="user_message">User Message</th>
+            <th data-key="model_response">Model Response</th>
+            <th data-key="validation_type">Validation Type</th>
+            <th data-key="validation_errors">Validation Errors</th>
+            <th data-key="model_name">Model Name</th>
+            <th data-key="token_prompt">Token Prompt</th>
+            <th data-key="token_completion">Token Completion</th>
+            <th data-key="token_total">Token Total</th>
+            <th data-key="retry_count">Retry Count</th>
+            <th data-key="metadata">Metadata</th>
+            <th data-key="created_at">Created At</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div class="pagination" id="pagination"></div>
+
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <pre id="modalContent"></pre>
+    </div>
+</div>
+
+<script src="log-viewer.js"></script>
+</body>
+</html>
+

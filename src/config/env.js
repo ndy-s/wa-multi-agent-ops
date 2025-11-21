@@ -1,12 +1,17 @@
 import "dotenv/config";
 
 const required = [
-    "OPENROUTER_API_KEYS",
-    "OPENROUTER_BASE_URL",
+    "APP_AUTH_USER",
+    "APP_AUTH_PASS",
+
     "BASE_API_URL",
+
     "ORACLE_USER",
     "ORACLE_PASSWORD",
-    "ORACLE_CONNECT_STRING"
+    "ORACLE_CONNECT_STRING",
+
+    "OPENROUTER_API_KEYS",
+    "OPENROUTER_BASE_URL",
 ];
 
 const sqliteType = process.env.SQLITE_TYPE || "local";
@@ -17,6 +22,7 @@ const embeddingModel = process.env.EMBEDDING_MODEL || "minilm";
 if (sqliteType === "cloud") {
     required.push("SQLITE_URL");
 }
+
 if (useEmbedding && embeddingModel.toLowerCase().includes("gpt3")) {
     required.push("OPENAI_API_KEYS");
 }
@@ -33,31 +39,36 @@ const parseEnvList = (value) => (value || "")
     .map(v => v.trim())
     .filter(Boolean);
 
-export const config = {
-    whitelist: parseEnvList(process.env.WHITELIST),
+const baseEmbeddingLimit = parseInt("3", 10);
 
-    llmLocale: process.env.LLM_LOCALE || "en-US",
-    useEmbedding,
-    embeddingLimit: parseInt(process.env.EMBEDDING_LIMIT || "3", 10),
-    embeddingLimitSql: parseInt(process.env.EMBEDDING_LIMIT_SQL || process.env.EMBEDDING_LIMIT || "3", 10),
-    embeddingLimitSchema: parseInt(process.env.EMBEDDING_LIMIT_SCHEMA || process.env.EMBEDDING_LIMIT || "3", 10),
-    embeddingLimitApi: parseInt(process.env.EMBEDDING_LIMIT_API || process.env.EMBEDDING_LIMIT || "3", 10),
-    embeddingModel,
+export const config = {
+    appAuthUser: process.env.APP_AUTH_USER,
+    appAuthPass: process.env.APP_AUTH_PASS,
+
+    baseApiUrl: process.env.BASE_API_URL,
 
     sqliteType,
     sqliteUrl: process.env.SQLITE_URL,
 
+    oracleUser: process.env.ORACLE_USER,
+    oraclePassword: process.env.ORACLE_PASSWORD,
+    oracleConnectString: process.env.ORACLE_CONNECT_STRING,
+
+    whitelist: parseEnvList(process.env.WHITELIST),
+
+    llmLocale: process.env.LLM_LOCALE || "en-US",
+    useEmbedding,
+    embeddingLimitSql: parseInt(process.env.EMBEDDING_LIMIT_SQL ?? baseEmbeddingLimit, 10),
+    embeddingLimitSchema: parseInt(process.env.EMBEDDING_LIMIT_SCHEMA ?? baseEmbeddingLimit, 10),
+    embeddingLimitApi: parseInt(process.env.EMBEDDING_LIMIT_API ?? baseEmbeddingLimit, 10),
+    embeddingModel,
+
     openaiApiKeys: parseEnvList(process.env.OPENAI_API_KEYS),
+
     googleaiApiKeys: parseEnvList(process.env.GOOGLEAI_API_KEYS),
 
     openrouterApiKeys: parseEnvList(process.env.OPENROUTER_API_KEYS),
     openrouterBaseUrl: process.env.OPENROUTER_BASE_URL,
-
-    baseApiUrl: process.env.BASE_API_URL,
-
-    oracleUser: process.env.ORACLE_USER,
-    oraclePassword: process.env.ORACLE_PASSWORD,
-    oracleConnectString: process.env.ORACLE_CONNECT_STRING
 };
 
 console.log(

@@ -1,4 +1,4 @@
-import { openDB } from "../db/sqlite.js";
+import { openSqliteDB } from "../db/sqlite.js";
 import logger from "../helpers/logger.js";
 import { config } from "../config/env.js";
 
@@ -10,7 +10,7 @@ export async function saveApiLog(logData) {
     } = logData;
 
     if (config.sqliteType === "cloud") {
-        const db = await openDB();
+        const db = await openSqliteDB();
 
         try {
             await db.sql`
@@ -39,7 +39,7 @@ export async function saveApiLog(logData) {
     } else {
         // Local DB
         try {
-            const db = await openDB();
+            const db = await openSqliteDB();
             const stmt = db.prepare(`
                 INSERT INTO api_logs (
                     chat_id, user_id,

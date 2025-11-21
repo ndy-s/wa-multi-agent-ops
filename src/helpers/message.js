@@ -3,6 +3,21 @@ import { splitTextForChat } from "./llm.js";
 import logger from "./logger.js";
 import { simulateTypingAndSend } from "./simulate.js";
 
+function formatClassifierTip(selectedAgent) {
+    const header = `💡 *Tip*`;
+    const body =
+        "To improve performance, you can include keywords like \"api\" or \"sql\" to route your request to a specific agent.\n\n" +
+        `Your request is currently being processed by the "${selectedAgent}" agent. Please wait...`;
+
+    return header + "\n\n" + body;
+}
+
+export async function sendClassifierTip(sock, originalMsg, remoteJid, selectedAgent) {
+    const messageText = formatClassifierTip(selectedAgent);
+
+    await sock.sendMessage(remoteJid, { text: messageText });
+}
+
 function formatPendingMessage(actionType, action, totalSeconds = 30) {
     const { id, params, query } = action;
 
@@ -14,7 +29,7 @@ function formatPendingMessage(actionType, action, totalSeconds = 30) {
             header = `*Pending API Confirmation*`;
             body = `API ID: \`${id || "(unknown)"}\`\n` +
                 (params && Object.keys(params).length
-                    ? `Parameters:\n\`\`\`json\n${JSON.stringify(params, null, 2)}\n\`\`\``
+                    ? `Parameters:\n\`\`\`json\n${JSON.stringify(params, null, 2)}\`\`\``
                     : "No parameters.");
             break;
 
@@ -22,7 +37,7 @@ function formatPendingMessage(actionType, action, totalSeconds = 30) {
             header = `*Pending SQL Confirmation*`;
             const sqlQuery = query || "(no SQL provided)";
             const sqlParams = params && Object.keys(params).length
-                ? `Parameters:\n\`\`\`json\n${JSON.stringify(params, null, 2)}\n\`\`\``
+                ? `Parameters:\n\`\`\`json\n${JSON.stringify(params, null, 2)}\`\`\``
                 : "No parameters.";
             body = `SQL ID: \`${id || "(unknown)"}\`\n` +
                    `Query:\n\`\`\`sql\n${sqlQuery}\n\`\`\`\n` +
@@ -34,7 +49,7 @@ function formatPendingMessage(actionType, action, totalSeconds = 30) {
             body = "Cannot process this request.";
     }
 
-    return `${header}\n\n${body}\nReact 👍 to confirm within ${totalSeconds}s`;
+    return `${header}\n\n${body}\n\nReact 👍 to confirm within ${totalSeconds}s`;
 }
 
 export async function sendPendingAction(sock, originalMsg, actionType, remoteJid, userJid, action, index) {
@@ -61,7 +76,7 @@ export async function sendPendingAction(sock, originalMsg, actionType, remoteJid
 
             const header = `⏰ *${actionType.toUpperCase()} Timeout*`;
             const body = `ID: \`${pending.action.id || "(unknown)"}\`\n` +
-                `No confirmation received. The action has been cancelled`;
+                `No confirmation received, so the action has been cancelled`;
 
             await sock.sendMessage(pending.userJid, {
                 text: `${header}\n\n${body}`,

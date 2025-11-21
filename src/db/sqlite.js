@@ -8,7 +8,7 @@ import { config } from "../config/env.js";
 let dbLocalInstance = null;
 let dbCloudInstance = null;
 
-export async function openDB() {
+export async function openSqliteDB() {
     // CLOUD DATABASE
     if (config.sqliteType === "cloud") {
         if (!config.sqliteUrl) {

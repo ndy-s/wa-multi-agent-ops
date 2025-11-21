@@ -1,3 +1,19 @@
+
+export function detectAgentByKeywords(messageText) {
+    const agent_keywords = {
+        api: ["api", "insert", "update", "delete", "modify", "manipulate"],
+        sql: ["sql", "query", "select", "table"]
+    };
+
+    const lowerMsg = messageText.toLowerCase();
+    for (const [agent, keywords] of Object.entries(agent_keywords)) {
+        if (keywords.some(keyword => lowerMsg.includes(keyword))) {
+            return agent;
+        }
+    }
+    return null;
+}
+
 export function formatLLMMessage(senderName, messageText, quotedContext) {
     return [
         `[User: ${senderName}]`,
