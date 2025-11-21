@@ -71,6 +71,4 @@ export const config = {
     openrouterBaseUrl: process.env.OPENROUTER_BASE_URL,
 };
 
-console.log(
-    `[config] Loaded ${config.openaiApiKeys.length} OpenAI key(s), ${config.googleaiApiKeys.length} GoogleAI key(s), and ${config.openrouterApiKeys.length} OpenRouter key(s)`
-);
+console.log(`[config] Loaded ${config.openaiApiKeys.length} OpenAI key(s), ${config.googleaiApiKeys.length} GoogleAI key(s), and ${config.openrouterApiKeys.length} OpenRouter key(s)`);

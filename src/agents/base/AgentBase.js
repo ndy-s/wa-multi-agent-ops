@@ -3,7 +3,7 @@ import logger from "../../helpers/logger.js";
 import { parseAndValidateResponse, extractValidationErrors } from "./response-validator.js";
 import { addMemory, getRecentMemory } from "../../memory/memory-store.js";
 import { saveApiLog } from "../../repositories/api-log-repository.js";
-import { jakartaTime, summarizeTokens } from "./utils.js";
+import { jakartaTime, stripCodeBlock, summarizeTokens } from "./utils.js";
 
 export class AgentBase {
     constructor({ id, model, schema, buildPrompt, handleResult }) {
@@ -27,7 +27,7 @@ export class AgentBase {
             ];
 
             if (retry > 0) {
-                messages.push(new SystemMessage(`Previous validation failed:\n${JSON.stringify(lastErrors, null, 2)}\nOriginal:\n${lastContent}`));
+                messages.push(new HumanMessage(`Previous validation failed:\n${JSON.stringify(lastErrors, null, 2)}\nOriginal:\n${lastContent}`));
             }
 
             try {
@@ -45,7 +45,8 @@ export class AgentBase {
 
                 lastContent = content;
 
-                const validated = parseAndValidateResponse(content, this.schema);
+                const rawContent = typeof res.content === "string" ? stripCodeBlock(res.content.trim()) : res.content;
+                const validated = parseAndValidateResponse(rawContent, this.schema);
                 logger.info(`[${this.id}] Validation passed for type=${validated.type}`);
 
                 addMemory(userJid, "user", `[${fullMessageJSON.sender}] ${fullMessageJSON.content}`);
@@ -76,6 +77,7 @@ export class AgentBase {
                 retry++;
                 lastErrors = err.name === "ZodError" ? extractValidationErrors(err, true) : { error: err.message };
                 logger.warn(`[${this.id}] Retry #${retry} failed:`, lastErrors);
+                console.log(err);
             }
         }
 

@@ -3,6 +3,10 @@ import crypto from "crypto";
 
 export const jakartaTime = () => DateTime.now().setZone("Asia/Jakarta").toISO();
 
+export function stripCodeBlock(str) {
+    return str.replace(/```json\s*([\s\S]*?)```/, '$1').trim();
+}
+
 export function summarizeTokens(res, model) {
     const tokenUsage = res?.response_metadata?.tokenUsage || res?.usage_metadata || {};
     return {
