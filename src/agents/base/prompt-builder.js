@@ -165,8 +165,9 @@ Instructions:
 - When returning a sql_action, always provide a valid SQL registry ID:
     - If you used a predefined SQL query, use its ID.
     - If you generated a new query not in the registry, invent a descriptive ID (e.g., "generated_payments_by_loan").
-- Include any parameters required by the query under "params".
 - Every request must resolve to exactly ONE SQL query. Do not return multiple queries. Combine logic into a single Oracle SQL statement when necessary.
+- Insert and update operations can only be performed using SQL queries **defined in the SQL registry**. Do not create insert or update queries from schema metadata.
+- Do not generate any destructive actions such as DELETE, DROP, TRUNCATE, or ALTER TABLE that could cause data loss.
 - Return a JSON object strictly following this Zod schema:
 
 1. **sql_action** (when the request is valid and in-scope):

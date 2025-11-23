@@ -47,7 +47,7 @@ export async function reactionHandler(sock, msg) {
             } else if (actionType === "sql") {
                 result = await callSql(query, params, true);
 
-                if (result && result.length > 0) {
+                if (Array.isArray(result) && result.length > 0) {
                     const imagePath = await generateTableImage(result);
 
                     try {
@@ -68,7 +68,7 @@ export async function reactionHandler(sock, msg) {
             }
 
             let resultText = JSON.stringify(result, null, 2);
-            if (resultText.length > 3000) {
+            if (Array.isArray(result) && resultText.length > 3000) {
                 resultText = resultText.slice(0, 3000) + "\n... (truncated)";
             }
 

@@ -3,6 +3,14 @@ import logger from "../helpers/logger.js";
 import { openOracleDB } from "../db/oracle.js";
 
 export async function callSql(query, params = {}) {
+    const destructivePatterns = /\b(DELETE|DROP|TRUNCATE|ALTER|MERGE)\b/i;
+
+    if (destructivePatterns.test(query.trim())) {
+        const msg = `Destructive SQL detected and blocked: "${query}"`;
+        logger.warn(`[Oracle] ${msg}`);
+        throw new Error(msg);
+    }
+
     const connection = await openOracleDB();
 
     try {
@@ -14,9 +22,7 @@ export async function callSql(query, params = {}) {
         logger.info(`[Oracle] SQL executed: ${query} | params=${JSON.stringify(params)}`);
         return result.rows;
     } catch (err) {
-        logger.error(
-            `[Oracle] SQL execution failed: ${query} | error=${err.message} | params=${JSON.stringify(params)}`
-        );
+        logger.error(`[Oracle] SQL execution failed: ${query} | error=${err.message} | params=${JSON.stringify(params)}`);
         throw err;
     }
 }
