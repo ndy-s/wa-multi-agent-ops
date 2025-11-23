@@ -1,113 +1,161 @@
 export const apiRegistry = {
     "LNO8888C.SVC": {
-        description: "Loan Creation API. Create a loan for a customer.",
-        fields: {
-            prdCode: {
-                required: true,
-                type: "string",
-                enum: ["11010009001001", "11010009001002", "13030009001001", "13030009001002", "13030009001012"],
-                mapping: {
+        "description": "Loan Creation API. Create a loan for a customer.",
+        "fields": {
+            "prdCode": {
+                "required": true,
+                "type": "string",
+                "enum": [
+                    "11010009001001",
+                    "11010009001002",
+                    "13030009001001",
+                    "13030009001002",
+                    "13030009001012"
+                ],
+                "mapping": {
                     "QC-GENERAL": "11010009001001",
                     "QC-PREMIUM": "11010009001002",
                     "KTA-GENERAL": "13030009001001",
                     "KTA-PREMIUM": "13030009001002",
                     "KTA-PAYROLL": "13030009001012"
                 },
-                instructions: "Product code for the selected product type."
+                "instructions": "Product code for the selected product type."
             },
-            custNo: {
-                required: false,
-                type: "string",
-                instructions: "Customer number (CIX No), 10 digits. Padded if shorter. Backend assigns a random customer if omitted."
+            "custNo": {
+                "required": false,
+                "type": "string",
+                "instructions": "Customer number (CIX No), 10 digits. Padded if shorter. Backend assigns a random customer if omitted."
             },
-            lonTerm: {
-                required: false,
-                type: "string",
-                enum: ["3","6","9","12","24","36","48","60"],
-                instructions: "Loan term in months. Limits: QC-GENERAL 3–6, QC-PREMIUM 3–12, KTA-GENERAL 3–6, KTA-PREMIUM 6–60. Backend assigns max if omitted."
+            "lonTerm": {
+                "required": false,
+                "type": "string",
+                "enum": [
+                    "3",
+                    "6",
+                    "9",
+                    "12",
+                    "24",
+                    "36",
+                    "48",
+                    "60"
+                ],
+                "instructions": "Loan term in months. Limits: QC-GENERAL 3–6, QC-PREMIUM 3–12, KTA-GENERAL 3–6, KTA-PREMIUM 6–60. Backend assigns max if omitted."
             },
-            repayPlan: {
-                required: false,
-                type: "string",
-                enum: ["3","6","9","12","24","36","48","60"],
-                instructions: "Repayment plan in months. Product limits: QC-GENERAL (3–6), QC-PREMIUM (3–36), KTA-GENERAL (3–6), KTA-PREMIUM (6–60). Backend assigns the maximum if omitted."
+            "repayPlan": {
+                "required": false,
+                "type": "string",
+                "enum": [
+                    "3",
+                    "6",
+                    "9",
+                    "12",
+                    "24",
+                    "36",
+                    "48",
+                    "60"
+                ],
+                "instructions": "Repayment plan in months. Product limits: QC-GENERAL (3–6), QC-PREMIUM (3–36), KTA-GENERAL (3–6), KTA-PREMIUM (6–60). Backend assigns the maximum if omitted."
             },
-            limitAmt: {
-                required: false,
-                type: "string",
-                instructions: "Maximum loan. GENERAL ≤ 4,900,000; PREMIUM ≤ 100,000,000. Backend assigns max if omitted."
+            "limitAmt": {
+                "required": false,
+                "type": "string",
+                "instructions": "Maximum loan. GENERAL ≤ 4,900,000; PREMIUM ≤ 100,000,000. Backend assigns max if omitted."
             },
-            riskSeg: {
-                required: false,
-                type: "string",
-                enum: ["SEG01", "SEG02", "SEG03"],
-                instructions: "Risk segment. Backend defaults to SEG01 if omitted."
+            "riskSeg": {
+                "required": false,
+                "type": "string",
+                "enum": [
+                    "SEG01",
+                    "SEG02",
+                    "SEG03"
+                ],
+                "instructions": "Risk segment. Backend defaults to SEG01 if omitted."
             },
-            grade: {
-                required: false,
-                type: "string",
-                enum: ["1","2","3","4","5","6","7","8","9","10"],
-                instructions: "Customer grade. Backend defaults to 1 if omitted."
+            "grade": {
+                "required": false,
+                "type": "string",
+                "enum": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "7",
+                    "8",
+                    "9",
+                    "10"
+                ],
+                "instructions": "Customer grade. Backend defaults to 1 if omitted."
             },
-            groupCd: {
-                required: false,
-                type: "string",
-                instructions: "3-digit area code. Backend defaults to 001 if omitted."
+            "groupCd": {
+                "required": false,
+                "type": "string",
+                "instructions": "3-digit area code. Backend defaults to 001 if omitted."
             },
-            excludeStep: {
-                required: false,
-                type: "array",
-                enum: ["SAVE", "CONT", "VERI"],
-                instructions: "Optional steps to skip."
+            "excludeStep": {
+                "required": false,
+                "type": "array",
+                "enum": [
+                    "SAVE",
+                    "CONT",
+                    "VERI"
+                ],
+                "instructions": "Optional steps to skip."
             }
         },
-        examples: [
+        "examples": [
             {
-                input: "Create a QC-PREMIUM loan for customer 12345 with 12-month term, repayment plan 12, and limit of 5,000,000.",
-                output: {
-                    id: "LNO8888C.SVC",
-                    params: {
-                        prdCode: "11010009001002",
-                        custNo: "0000012345",
-                        lonTerm: "12",
-                        repayPlan: "12",
-                        limitAmt: "5000000",
+                "input": "Create a QC-PREMIUM loan for customer 12345 with 12-month term, repayment plan 12, and limit of 5,000,000.",
+                "output": {
+                    "id": "LNO8888C.SVC",
+                    "params": {
+                        "prdCode": "11010009001002",
+                        "custNo": "0000012345",
+                        "lonTerm": "12",
+                        "repayPlan": "12",
+                        "limitAmt": "5000000"
                     }
                 }
             }
         ]
     },
-
     "LNO8888D.SVC": {
-        description: "Portfolio manipulation API. e.g., extend contract validity.",
-        fields: {
-            pgmType: {
-                required: true,
-                type: "string",
-                enum: ["11","12","31","32","33"],
-                mapping: {
+        "description": "Portfolio manipulation API. e.g., extend contract validity.",
+        "fields": {
+            "pgmType": {
+                "required": true,
+                "type": "string",
+                "enum": [
+                    "11",
+                    "12",
+                    "31",
+                    "32",
+                    "33"
+                ],
+                "mapping": {
                     "QC-EXTEND": "11",
                     "KTA-REPEAT": "12",
                     "KTA-TOP-UP": "31",
                     "KTA-INCREASE-LIMIT": "32",
                     "QC-INCREASE-LIMIT": "33"
                 },
-                instructions: "Program type code mapped from product name."
+                "instructions": "Program type code mapped from product name."
             },
-            refNo: {
-                required: true,
-                type: "string",
-                instructions: "Reference number, 16 digits, starting with '1188'."
+            "refNo": {
+                "required": true,
+                "type": "string",
+                "instructions": "Reference number, 16 digits, starting with '1188'."
             }
         },
-        examples: [
+        "examples": [
             {
-                input: "QC Increase Limit for customer 12345",
-                output: {
-                    id: "LNO8888D.SVC",
-                    params: {
-                        pgmType: "33",
-                        refNo: "118812345"
+                "input": "QC Increase Limit for customer 1188123456789101",
+                "output": {
+                    "id": "LNO8888D.SVC",
+                    "params": {
+                        "pgmType": "33",
+                        "refNo": "1188123456789101"
                     }
                 }
             }

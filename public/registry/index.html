@@ -1,30 +1,84 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>API & SQL Registry</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <head>
+        <title>API & SQL Registry</title>
+        <link rel="stylesheet" href="style.css">
 
-<h1>API & SQL Registry</h1>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/idea.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/fold/foldgutter.min.css">
+    </head>
+    <body>
 
-<div class="tab-container">
-    <button class="tab-btn active" onclick="switchTab('api')">API Registry</button>
-    <button class="tab-btn" onclick="switchTab('sql')">SQL Registry</button>
-</div>
+        <h1>API & SQL Registry</h1>
 
-<div id="api" class="tab-content active">
-    <h2>API Registry</h2>
-    <div id="apiTableContainer"></div>
-</div>
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('api')">API Registry</button>
+            <button class="tab-btn" onclick="switchTab('schema')">Schema Registry</button>
+            <button class="tab-btn" onclick="switchTab('sql')">SQL Registry</button>
+        </div>
 
-<div id="sql" class="tab-content">
-    <h2>SQL Registry</h2>
-    <div id="sqlTableContainer"></div>
-</div>
+        <div id="api" class="tab-content active">
+            <div class="editor-container">
+                <textarea id="apiJson"></textarea>
+                <div class="editor-status">
+                    <label class="vim-toggle-switch">
+                        <input type="checkbox" onchange="toggleVim('api', this)">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="vim-status">Vim Mode: OFF</span>
+                </div>
+                <div class="button-container">
+                    <button class="load-skeleton-btn" onclick="appendSkeleton('api')">Append API Skeleton</button>
+                    <button class="update-btn" onclick="updateRegistry('api')">Update API Registry</button>
+                </div>
+            </div>
+        </div>
 
-<script src="script.js"></script>
-</body>
+        <div id="schema" class="tab-content">
+            <div class="editor-container">
+                <textarea id="schemaJson"></textarea>
+                <div class="editor-status">
+                    <label class="vim-toggle-switch">
+                        <input type="checkbox" onchange="toggleVim('schema', this)">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="vim-status">Vim Mode: OFF</span>
+                </div>
+                <div class="button-container">
+                    <button class="load-skeleton-btn" onclick="appendSkeleton('schema')">Append Schema Skeleton</button>
+                    <button class="update-btn" onclick="updateRegistry('schema')">Update Schema Registry</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sql" class="tab-content">
+            <div class="editor-container">
+                <textarea id="sqlJson"></textarea>
+                <div class="editor-status">
+                    <label class="vim-toggle-switch">
+                        <input type="checkbox" onchange="toggleVim('sql', this)">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="vim-status">Vim Mode: OFF</span>
+                </div>
+                <div class="button-container">
+                    <button class="load-skeleton-btn" onclick="appendSkeleton('sql')">Append SQL Skeleton</button>
+                    <button class="update-btn" onclick="updateRegistry('sql')">Update SQL Registry</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/closebrackets.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/matchbrackets.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/fold/foldcode.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/fold/foldgutter.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/fold/brace-fold.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/keymap/vim.min.js"></script>
+        <script src="script.js"></script>
+    </body>
 </html>
 
 

@@ -1,59 +1,182 @@
 body {
-    font-family: Inter, sans-serif;
-    padding: 20px;
-    background: #f5f6fa;
+    font-family: 'Inter', sans-serif;
+    padding: 40px;
+    background: #f4f6f8;
+    color: #2c3e50;
+    margin: 0;
 }
 
 h1 {
-    text-align: center;
-    margin-bottom: 20px;
-    font-weight: 600;
+    font-weight: 700;
+    margin-bottom: 30px;
+    text-align: center; 
+    color: #34495e;
 }
 
+/* Tabs */
 .tab-container {
+    margin-bottom: 25px;
     text-align: center;
-    margin-bottom: 20px;
 }
-
 .tab-btn {
-    padding: 10px 20px;
-    margin: 5px;
+    padding: 10px 25px;
+    margin: 0 5px;
     border: none;
-    background: #ddd;
-    color: #333;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
+    background: #e0e0e0;
+    color: #333;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
 }
-
+.tab-btn:hover {
+    background: #d5d5d5;
+}
 .tab-btn.active {
     background: #007bff;
     color: white;
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
 }
 
+/* Tab content */
 .tab-content {
     display: none;
 }
-
 .tab-content.active {
     display: block;
 }
 
-table {
-    border-collapse: collapse;
-    width: 100%;
-    background: #fff;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+/* Editor */
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; 
+    margin-top: 10px;
+    width: 90%;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    resize: vertical;
 }
 
-th, td {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
+.editor-status {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #555;
 }
 
-th {
-    background: #007bff;
-    color: white;
+.vim-status.vim-on {
+    color: #42a5f5; 
+    font-weight: 600;
+}
+
+.vim-toggle-switch {
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    margin-right: 10px;
+    vertical-align: middle;
+    position: relative;
+}
+
+.vim-toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.vim-toggle-switch .slider {
+    position: absolute;
     cursor: pointer;
+    top: 0; left: 0;
+    right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
 }
 
+.vim-toggle-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+.vim-toggle-switch input:checked + .slider {
+    background-color: #42a5f5;
+}
+
+.vim-toggle-switch input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.CodeMirror {
+    height: 600px; 
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+.CodeMirror-focused {
+    border-color: #007bff !important;
+    box-shadow: 0 8px 25px rgba(0,123,255,0.2);
+}
+
+/* Buttons container */
+.button-container {
+    margin-top: 12px;
+    text-align: right; 
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.update-btn {
+    background: #007bff; 
+    color: #fff;
+    padding: 10px 25px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.update-btn:hover {
+    background: #0056b3;
+}
+
+.load-skeleton-btn {
+    background: #28a745; 
+    color: #fff;
+    padding: 10px 25px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.load-skeleton-btn:hover {
+    background: #218838; 
+}
+
+/* JSON error highlighting */
+.cm-json-error {
+    text-decoration: underline wavy red;
+}
+
+/* Vim mode block cursor */
+.cm-fat-cursor .CodeMirror-cursor {
+    width: auto !important;
+    background: #42a5f5 !important; 
+}
 
