@@ -1,4 +1,4 @@
-# WA Multi-Agent Ops
+# WhatsApp Multi-Agent Ops
 
 <p>
   <img src="https://github.com/ndy-s/wa-multi-agent-ops/blob/main/assets/icon.png" alt="Puppet Browser Logo" width="150" height="150" style="vertical-align: middle; margin-right: 15px;">
