@@ -18,11 +18,10 @@ h1 {
 
 .config-card {
     background: white;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 15px;
+    padding: 22px;
+    margin-bottom: 22px;
+    border-radius: 16px;
     box-shadow: 0 3px 14px rgba(0,0,0,0.08);
-    transition: 0.2s ease;
 }
 
 .config-card.collapsed .config-body {
@@ -32,28 +31,35 @@ h1 {
 .config-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     cursor: pointer;
+    padding-bottom: 10px;
 }
 
 .config-header h2 {
+    font-size: 18px;
     margin: 0;
-    font-size: 20px;
 }
 
 .config-field {
     display: flex;
-    justify-content: space-between;
-    margin: 15px 0;
+    align-items: center;
+    gap: 20px;
+    margin: 14px 0;
 }
 
 .config-field label {
-    width: 260px;
+    width: 240px;
     font-size: 15px;
     color: #34495e;
 }
 
-input, select, textarea {
-    width: 320px;
+.config-field input[type="text"],
+.config-field input[type="password"],
+.config-field input[type="number"],
+.config-field textarea,
+.config-field select {
+    width: 300px;
     padding: 8px 12px;
     border-radius: 8px;
     border: 1px solid #ccd1d9;
@@ -64,36 +70,39 @@ textarea {
     resize: vertical;
 }
 
-/* Toggle Switch */
 .switch {
     position: relative;
     display: inline-block;
-    width: 55px;
-    height: 28px;
+    width: 44px;
+    height: 22px;
 }
 
-.switch input { display: none; }
+.switch input {
+    display: none;
+}
 
 .slider {
     position: absolute;
     cursor: pointer;
-    top: 0; left: 0;
-    right: 0; bottom: 0;
-    background: #ccc;
-    transition: .2s;
-    border-radius: 28px;
+    top: 0;
+    left: 0;
+    width: 44px;
+    height: 22px;
+    background: #cfd4da;
+    border-radius: 22px;
+    transition: 0.2s ease;
 }
 
 .slider:before {
-    position: absolute;
     content: "";
-    height: 22px;
-    width: 22px;
-    left: 3px;
-    top: 3px;
+    position: absolute;
+    width: 18px;
+    height: 18px;
     background: white;
-    transition: .2s;
     border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: 0.2s ease;
 }
 
 input:checked + .slider {
@@ -101,7 +110,7 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-    transform: translateX(26px);
+    transform: translateX(22px);
 }
 
 .save-btn {
@@ -118,6 +127,24 @@ input:checked + .slider:before {
 
 .save-btn:hover {
     background: #0056d2;
+}
+
+@media (max-width: 720px) {
+
+    .config-field {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .config-field label {
+        width: 100%;
+    }
+
+    .config-field input,
+    .config-field textarea,
+    .config-field select {
+        width: 100%;
+    }
 }
 
 

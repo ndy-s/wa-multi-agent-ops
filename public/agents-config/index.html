@@ -21,9 +21,9 @@ const configSections = [
         title: "Agent Controls",
         id: "agent-controls",
         fields: [
-            { key: "ENABLE_CLASSIFIER", label: "Classifier Agent", type: "toggle" },
+            { key: "ENABLE_CLASSIFIER", label: "Classifier Agent", type: "toggle", readonly: true },
             { key: "ENABLE_API_AGENT", label: "API Agent", type: "toggle" },
-            { key: "ENABLE_SQL_AGENT", label: "SQL Agent", type: "toggle" }
+            { key: "ENABLE_SQL_AGENT", label: "SQL Agent", type: "toggle" },
         ]
     },
     {
@@ -74,6 +74,32 @@ const configSections = [
             { key: "OPENROUTER_API_KEYS", label: "OpenRouter Keys (one per line)", type: "textarea" },
             { key: "OPENROUTER_BASE_URL", label: "OpenRouter Base URL", type: "text" }
         ]
+    },
+
+    // --------------------------
+    //    NEW SECTIONS ADDED
+    // --------------------------
+    {
+        title: "Classifier Mode (Auto)",
+        id: "classifier-mode-section",
+        fields: [
+            { key: "CLASSIFIER_MODE", label: "Mode", type: "text", readonly: true }
+        ]
+    },
+    {
+        title: "Manual Classifier Keywords",
+        id: "classifier-keywords-section",
+        fields: [
+            { key: "SQL_KEYWORDS", label: "SQL Keywords (one per line)", type: "textarea" },
+            { key: "API_KEYWORDS", label: "API Keywords (one per line)", type: "textarea" }
+        ]
+    },
+    {
+        title: "LLM Model Priority",
+        id: "model-priority-section",
+        fields: [
+            { key: "MODEL_PRIORITY", label: "Model Priority (top = highest)", type: "textarea" }
+        ]
     }
 ];
 
@@ -82,10 +108,6 @@ const configSections = [
 // ----------------------------
 async function loadConfig() {
 
-    // const res = await fetch("/ops-config");
-    // const data = await res.json();
-
-    // Dummy data for now
     const data = {
         ENABLE_CLASSIFIER: true,
         ENABLE_API_AGENT: true,
@@ -106,7 +128,12 @@ async function loadConfig() {
         OPENAI_API_KEYS: "",
         GOOGLEAI_API_KEYS: "",
         OPENROUTER_API_KEYS: "",
-        OPENROUTER_BASE_URL: "https://openrouter.ai/api/v1"
+        OPENROUTER_BASE_URL: "https://openrouter.ai/api/v1",
+
+        SQL_KEYWORDS: "",
+        API_KEYWORDS: "",
+        MODEL_PRIORITY: "deepseek\ngemini\ngpt",
+        CLASSIFIER_MODE: "manual-api"
     };
 
     const container = document.getElementById("config-container");
@@ -128,33 +155,25 @@ async function loadConfig() {
 
         section.fields.forEach(f => {
             const value = data[f.key] ?? "";
-
             let inputHtml = "";
 
-            switch (f.type) {
-                case "toggle":
-                    inputHtml = `
-                        <label class="switch">
-                            <input type="checkbox" id="${f.key}" ${value ? "checked" : ""}>
-                            <span class="slider"></span>
-                        </label>
-                    `;
-                    break;
-
-                case "select":
-                    inputHtml = `
-                        <select id="${f.key}">
-                            ${f.options.map(o => `<option value="${o}" ${o === value ? "selected" : ""}>${o}</option>`).join("")}
-                        </select>
-                    `;
-                    break;
-
-                case "textarea":
-                    inputHtml = `<textarea id="${f.key}" rows="3">${value}</textarea>`;
-                    break;
-
-                default:
-                    inputHtml = `<input type="${f.type}" id="${f.key}" value="${value}" placeholder="${f.placeholder || ""}">`;
+            if (f.type === "toggle") {
+                inputHtml = `
+                    <label class="switch">
+                        <input type="checkbox" id="${f.key}" ${value ? "checked" : ""} ${f.readonly ? "disabled" : ""}>
+                        <span class="slider"></span>
+                    </label>
+                `;
+            } else if (f.type === "select") {
+                inputHtml = `
+                    <select id="${f.key}">
+                        ${f.options.map(o => `<option value="${o}" ${o === value ? "selected" : ""}>${o}</option>`).join("")}
+                    </select>
+                `;
+            } else if (f.type === "textarea") {
+                inputHtml = `<textarea id="${f.key}" rows="3">${value}</textarea>`;
+            } else {
+                inputHtml = `<input type="text" id="${f.key}" value="${value}" ${f.readonly ? "readonly" : ""}>`;
             }
 
             body.innerHTML += `
@@ -175,14 +194,15 @@ async function loadConfig() {
 //      HANDLERS & LOGIC
 // ----------------------------
 function attachHandlers() {
-    // Accordion
     document.querySelectorAll(".config-header").forEach(h => {
-        h.addEventListener("click", () => h.parentElement.classList.toggle("collapsed"));
+        h.addEventListener("click", () =>
+            h.parentElement.classList.toggle("collapsed")
+        );
     });
 
-    // Agent dependency logic
     document.getElementById("ENABLE_API_AGENT").addEventListener("change", handleAgentRules);
     document.getElementById("ENABLE_SQL_AGENT").addEventListener("change", handleAgentRules);
+
     handleAgentRules();
 }
 
@@ -190,15 +210,24 @@ function handleAgentRules() {
     const apiOn = document.getElementById("ENABLE_API_AGENT").checked;
     const sqlOn = document.getElementById("ENABLE_SQL_AGENT").checked;
 
-    // If both disabled → disable classifier
+    const classifierEl = document.getElementById("ENABLE_CLASSIFIER");
+    const modeEl = document.getElementById("CLASSIFIER_MODE");
+
+    // Classifier auto logic
+    classifierEl.disabled = true;
+
     if (!apiOn && !sqlOn) {
-        document.getElementById("ENABLE_CLASSIFIER").checked = false;
-        document.getElementById("ENABLE_CLASSIFIER").disabled = true;
+        classifierEl.checked = false;
+        modeEl.value = "disabled";
     } else {
-        document.getElementById("ENABLE_CLASSIFIER").disabled = false;
+        classifierEl.checked = true;
+
+        if (apiOn && sqlOn) modeEl.value = "hybrid";
+        else if (apiOn) modeEl.value = "manual-api";
+        else if (sqlOn) modeEl.value = "manual-sql";
     }
 
-    // Show/hide dependent sections
+    // Toggle oracle/API sections
     document.querySelector("[data-section-id='api-agent-section']").style.display = apiOn ? "block" : "none";
     document.querySelector("[data-section-id='sql-agent-section']").style.display = sqlOn ? "block" : "none";
 }
@@ -211,8 +240,6 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
     document.querySelectorAll("#config-container input, select, textarea").forEach(el => {
         payload[el.id] = el.type === "checkbox" ? el.checked : el.value;
     });
-
-    // await fetch("/ops-config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
 
     alert("Configuration saved!");
 });
