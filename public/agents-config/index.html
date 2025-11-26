@@ -12,6 +12,10 @@
 
 <button id="saveBtn" class="save-btn">💾 Save Configuration</button>
 
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+</div>
+
 <script>
     const configSections = [
         {
@@ -187,13 +191,15 @@
     }
 
     document.getElementById("saveBtn").addEventListener("click", async () => {
+        const overlay = document.getElementById("loadingOverlay");
+        overlay.style.display = "flex"; // show loading
+
         const payload = {};
         document.querySelectorAll("#config-container input, select, textarea").forEach(el => {
             let value;
-            if (el.type === "checkbox") value = el.checked ? "true" : "false"; // convert boolean to string
-            else if (el.type === "number") value = el.value; // store as string
-            else value = el.value ?? "";
-
+            if (el.type === "checkbox") value = el.checked ? "true" : "false";
+                else if (el.type === "number") value = el.value;
+                    else value = el.value ?? "";
             payload[el.id] = value;
         });
 
@@ -203,17 +209,22 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
+
             const data = await res.json();
             if (data.success) alert("Configuration saved successfully!");
-            else alert("Failed to save configuration");
+                else alert("Failed to save configuration");
+
         } catch (err) {
             console.error(err);
             alert("Error saving configuration");
+        } finally {
+            overlay.style.display = "none"; // hide loading
         }
     });
 
     loadConfig();
 </script>
+
 </body>
 </html>
 
