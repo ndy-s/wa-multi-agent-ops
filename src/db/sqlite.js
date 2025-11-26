@@ -15,6 +15,7 @@ async function seedDefaultSettings(db) {
 
         ["SQL_KEYWORDS", "sql", "string", 0],
         ["API_KEYWORDS", "api", "string", 0],
+        ["API_CUSTOM_HEADERS", "", "string", 0],
 
         ["BASE_API_URL", "http://localhost:55555/api-dummy", "string", 0],
 

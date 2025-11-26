@@ -9,9 +9,14 @@ export async function callApi(apiId, params = {}) {
     try {
         const res = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                ...config.apiCustomHeaders,
+            },
             body: JSON.stringify(params),
         });
+
+        console.log(config.apiCustomHeaders);
 
         if (res.status === 401) {
             throw new Error(`Unauthorized: You don't have access to ${apiId}`);

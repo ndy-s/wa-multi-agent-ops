@@ -3,8 +3,25 @@ import { settingsRepository } from "../repositories/settings-repository.js";
 import { sleep } from "../helpers/utils.js";
 import logger from "../helpers/logger.js";
 
-const parseList = (value) =>
-    (value || "").split(",").map(v => v.trim()).filter(Boolean);
+const parseList = (value) => (value || "").split(",").map(v => v.trim()).filter(Boolean);
+
+const parseCustomHeaders = (raw) => {
+    const headers = {};
+    if (!raw) return headers;
+
+    raw.split(",").forEach(pair => {
+        const trimmed = pair.trim();
+        if (!trimmed) return;
+
+        const [key, ...rest] = trimmed.split(":");
+        if (!key || rest.length === 0) return;
+
+        headers[key.trim()] = rest.join(":").trim();
+    });
+
+    return headers;
+}
+
 
 const requiredEnv = ["APP_AUTH_USER", "APP_AUTH_PASS"];
 for (const key of requiredEnv) {
@@ -47,6 +64,7 @@ export async function loadConfig() {
         sqlKeywords,
         apiKeywords,
         baseApiUrl,
+        apiCustomHeaders,
         oracleUser,
         oraclePassword,
         oracleConnectString,
@@ -69,6 +87,7 @@ export async function loadConfig() {
         settingsRepository.get("SQL_KEYWORDS"),
         settingsRepository.get("API_KEYWORDS"),
         settingsRepository.get("BASE_API_URL"),
+        settingsRepository.get("API_CUSTOM_HEADERS"),
         settingsRepository.get("ORACLE_USER"),
         settingsRepository.get("ORACLE_PASSWORD"),
         settingsRepository.get("ORACLE_CONNECT_STRING"),
@@ -95,6 +114,7 @@ export async function loadConfig() {
         sqlKeywords: parseList(sqlKeywords),
         apiKeywords: parseList(apiKeywords),
         baseApiUrl,
+        apiCustomHeaders: parseCustomHeaders(apiCustomHeaders),
         oracleUser,
         oraclePassword,
         oracleConnectString,

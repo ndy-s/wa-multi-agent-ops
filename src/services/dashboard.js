@@ -169,7 +169,7 @@ export const sqlRegistry = ${JSON.stringify(newSqlRegistry, null, 4)};
                 let value = r.value;
                 const key = r.key;
 
-                if ((key.endsWith("_API_KEYS") || (key.endsWith("_KEYWORDS")) || key === "WHITELIST") || key === "MODEL_PRIORITY") {
+                if ((key.endsWith("_API_KEYS") || (key.endsWith("_KEYWORDS")) || key === "WHITELIST") || key === "MODEL_PRIORITY" || key === "API_CUSTOM_HEADERS") {
                     if (typeof value === "string") value = value.split(",").join("\n");
                 }
 
@@ -202,7 +202,7 @@ export const sqlRegistry = ${JSON.stringify(newSqlRegistry, null, 4)};
                     val = "";
                 } else if (typeof val === "boolean") {
                     val = val ? "true" : "false";
-                } else if ((key.endsWith("_API_KEYS") || (key.endsWith("_KEYWORDS")) || key === "WHITELIST") || key === "MODEL_PRIORITY" && typeof val === "string") {
+                } else if ((key.endsWith("_API_KEYS") || (key.endsWith("_KEYWORDS")) || key === "WHITELIST") || key === "MODEL_PRIORITY" || key === "API_CUSTOM_HEADERS" && typeof val === "string") {
                     val = val.split("\n").map(s => s.trim()).filter(Boolean).join(",");
                 } else {
                     val = val.toString();
