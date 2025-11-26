@@ -2,8 +2,6 @@ import * as deepseek from "./deepseek.js";
 import * as gemini from "./gemini.js";
 import logger from "../../helpers/logger.js";
 
-const models = { deepseek, gemini };
-
 export class ModelManager {
     constructor(strategy) {
         this.strategy = strategy;
@@ -17,13 +15,14 @@ export class ModelManager {
     }
 
     async getModel() {
+        const models = { deepseek, gemini };
         const now = Date.now();
 
         for (const modelName of this.strategy) {
             const mod = models[modelName];
             if (!mod) continue;
 
-            const keys = mod.apiKeys || [];
+            const keys = await mod.getApiKeys() || [];
             if (!keys.length) continue;
 
             let attempts = 0;

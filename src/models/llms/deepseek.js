@@ -1,9 +1,10 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { loadConfig } from "../../config/env.js";
 
-const config = await loadConfig();
-
-export const apiKeys = config.openrouterApiKeys || [];
+export async function getApiKeys() {
+    const config = await loadConfig();
+    return config.openrouterApiKeys || [];
+}
 
 export function createModel(apiKey) {
     return new ChatOpenAI({
