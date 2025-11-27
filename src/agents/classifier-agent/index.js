@@ -13,6 +13,6 @@ export async function getClassifierAgent(modelManager) {
         schema: classifierAgentSchema,
         buildPrompt: buildClassifierPrompt,
         handleResult: handleClassifierResult,
-        useMemory: false
+        saveMemory: false
     });
 }

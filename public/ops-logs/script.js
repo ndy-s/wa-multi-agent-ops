@@ -76,8 +76,28 @@ function renderTable() {
     tbody.innerHTML = '';
     logs.forEach(row => {
         const tr = document.createElement('tr');
-        tr.innerHTML = Object.keys(row).map(key => `<td title="${row[key] || ''}">${truncate(row[key])}</td>`).join('');
-        tr.ondblclick = () => showModal(row);
+
+        Object.keys(row).forEach(key => {
+            const td = document.createElement('td');
+            td.title = row[key] || '';
+            td.textContent = truncate(row[key]);
+
+            td.ondblclick = (e) => {
+                const modal = document.getElementById('modalContent');
+                let value;
+                try {
+                    value = JSON.parse(row[key]);
+                } catch {
+                    value = row[key];
+                }
+                const formatted = { [key]: value };
+                modal.innerHTML = syntaxHighlight(formatted);
+                document.getElementById('modal').style.display = 'flex';
+            };
+
+            tr.appendChild(td);
+        });
+
         tbody.appendChild(tr);
     });
     renderPagination();

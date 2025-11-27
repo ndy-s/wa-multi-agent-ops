@@ -16,8 +16,6 @@ export async function callApi(apiId, params = {}) {
             body: JSON.stringify(params),
         });
 
-        console.log(config.apiCustomHeaders);
-
         if (res.status === 401) {
             throw new Error(`Unauthorized: You don't have access to ${apiId}`);
         }

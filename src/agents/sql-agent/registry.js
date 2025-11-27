@@ -221,7 +221,7 @@ export const sqlRegistry = {
         "params": []
     },
     "listOverdueLoans": {
-        "query": "SELECT * FROM loans WHERE due_date < CURRENT_DATE AND status = 'active'",
+        "query": "SELECT * FROM loans WHERE due_date < SYSDATE AND status = 'active'",
         "description": "List all overdue loans",
         "params": []
     },
@@ -240,7 +240,7 @@ export const sqlRegistry = {
         ]
     },
     "listRecentPayments": {
-        "query": "SELECT * FROM payments ORDER BY payment_date DESC LIMIT :limit",
+        "query": "SELECT * FROM (SELECT * FROM payments ORDER BY payment_date DESC) WHERE ROWNUM <= :limit",
         "description": "Fetch recent payments",
         "params": [
             "limit"

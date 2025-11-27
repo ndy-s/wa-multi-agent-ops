@@ -2,10 +2,35 @@ import "dotenv/config";
 import { settingsRepository } from "../repositories/settings-repository.js";
 import { sleep } from "../helpers/utils.js";
 import logger from "../helpers/logger.js";
+import crypto from "crypto";
 
 const parseList = (value) => (value || "").split(",").map(v => v.trim()).filter(Boolean);
 
-const parseCustomHeaders = (raw) => {
+function getTrscDate() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}/${mm}/${dd}`;
+}
+
+function resolveDynamicValue(token) {
+    switch (token) {
+        case "{today_ymd}":
+            return getTrscDate();
+
+        case "{timestamp}":
+            return Date.now().toString();
+
+        case "{uuid}":
+            return crypto.randomUUID();
+
+        default:
+            return token;
+    }
+}
+
+function parseCustomHeaders(raw) {
     const headers = {};
     if (!raw) return headers;
 
@@ -16,12 +41,18 @@ const parseCustomHeaders = (raw) => {
         const [key, ...rest] = trimmed.split(":");
         if (!key || rest.length === 0) return;
 
-        headers[key.trim()] = rest.join(":").trim();
+        let value = rest.join(":").trim();
+
+        // Placeholder
+        if (value.startsWith("{") && value.endsWith("}")) {
+            value = resolveDynamicValue(value);
+        }
+
+        headers[key.trim()] = value;
     });
 
     return headers;
 }
-
 
 const requiredEnv = ["APP_AUTH_USER", "APP_AUTH_PASS"];
 for (const key of requiredEnv) {

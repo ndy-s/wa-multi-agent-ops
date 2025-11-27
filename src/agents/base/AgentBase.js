@@ -6,13 +6,13 @@ import { saveApiLog } from "../../repositories/api-log-repository.js";
 import { jakartaTime, stripCodeBlock, summarizeTokens } from "../../helpers/utils.js";
 
 export class AgentBase {
-    constructor({ id, model, schema, buildPrompt, handleResult, useMemory = true }) {
+    constructor({ id, model, schema, buildPrompt, handleResult, saveMemory = true }) {
         this.id = id;
         this.model = model;
         this.schema = schema;
         this.buildPrompt = buildPrompt;
         this.handleResult = handleResult;
-        this.useMemory = useMemory;
+        this.saveMemory = saveMemory;
     }
 
     parseModelContent(res) {
@@ -44,12 +44,24 @@ export class AgentBase {
     }
 
     buildMessages(systemPrompt, memory, userMessage, retry, lastErrors, lastContent) {
+        const normalizeRole = (role) => {
+            if (role.toLowerCase() === "user") return "User";
+            if (role.toLowerCase() === "sqlagent") return "SQL Agent";
+            if (role.toLowerCase() === "apiagent") return "API Agent";
+            if (role.toLowerCase() === "assistant") return "Assistant";
+            return role;
+        };
+
         const messages = [
             new SystemMessage(systemPrompt),
-            ...memory.map(m => m.role === "user"
-                ? new HumanMessage(m.content)
-                : new AIMessage(m.content)
-            ),
+            ...memory.map(m => {
+                if (m.role === "user") return new HumanMessage(m.content);
+
+                const agentLabel = normalizeRole(m.role);
+                const contentWithAgent = `[${agentLabel}] ${m.content}`;
+
+                return new AIMessage(contentWithAgent);
+            }),
             new HumanMessage(userMessage)
         ];
 
@@ -70,7 +82,7 @@ export class AgentBase {
         let lastContent = "";
         let meta;
 
-        const memory = this.useMemory ? getRecentMemory(userJid) : [];
+        const memory = getRecentMemory(userJid);
         const memorySize = memory.length;
 
         const { systemPrompt, memoryPrompt, userMessage } = await this.buildPrompt(fullMessageJSON, memory);
@@ -120,9 +132,9 @@ export class AgentBase {
                 const validated = parseAndValidateResponse(rawContent, this.schema);
                 logger.info(`[${this.id}] Validation passed (type=${validated.type})`);
 
-                if (this.useMemory) {
+                if (this.saveMemory) {
                     addMemory(userJid, "user", `[${fullMessageJSON.sender}] ${fullMessageJSON.content}`);
-                    addMemory(userJid, "assistant", validated.content.message || "[Pending processing API/SQL confirmation]");
+                    addMemory(userJid, `${this.id}`, validated.content.message || "[Pending processing API/SQL confirmation]");
                 }
 
                 await this.logApi({
