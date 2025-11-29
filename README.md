@@ -41,3 +41,41 @@ Free models do come with trade-offs such as slower responses, occasional delays,
 
 If you ever want to scale it further or make it more powerful, switching to a paid state-of-the-art model will immediately give you faster responses, better accuracy, and a noticeably smoother experience.
 
+## Quick Setup
+
+Getting everything running is simple. Here’s the full workflow.
+
+### Clone the Repository & Install Dependencies
+
+```bash
+git clone https://github.com/ndy-s/wa-multi-agent-ops.git
+cd wa-multi-agent-ops
+npm install
+```
+
+### Start the Server
+
+```bash
+npm run start
+```
+
+This will automatically launch the Dashboard.
+Open your browser and visit:
+
+```
+http://localhost:55555
+```
+### Configure Your Agents
+
+Inside the dashboard, open the Agent Configuration menu and fill in all required fields:
+
+* **Base API URL**: This is used by the API agent to call external services. Enter the URL where your API endpoints are accessible.
+* **SQL Settings**: Currently, the SQL agent only supports Oracle. You need to provide the username, password, and connection string. For example, your connection string could be `192.168.1.10:1521/ORCL` or `localhost/XEPDB1`, depending on your Oracle setup. Once entered, the SQL agent can connect to the database and execute queries.
+* **LLM API keys**: Add keys for any models you want the bot to use, such as Gemini, DeepSeek, OpenRouter, or OpenAI. You can enter more than one API key by putting each key on a separate row. You can also configure the model priority, which determines the order in which the models are used for tasks. Currently, the default priority is Gemini first, then DeepSeek. The system uses a round-robin strategy to distribute tasks among available models. This ensures consistent load balancing and fallback if one model is slow or unavailable. You can read more about the round-robin method [here](https://en.wikipedia.org/wiki/Round-robin_scheduling).
+* **Whitelist input**: Enter phone numbers or group IDs that the bot is allowed to respond to. You can leave this empty at first. After linking your WhatsApp account, if a message comes from a chat not in the whitelist, the bot will log the user or group ID in the console. You can then copy the ID and add it to the whitelist so the bot will start responding in that chat. This makes it easy to manage authorized chats dynamically.
+
+After clicking Save Configuration, the system will check whether configuration data already exists, store and apply the settings, and automatically start the WhatsApp bot.
+
+### Connect Your WhatsApp Account
+
+When the bot starts, a QR code will appear in your console. Open WhatsApp on your phone, go to Linked Devices, and scan the QR code. Once linked, the bot is active and ready to respond to messages according to the whitelist.
