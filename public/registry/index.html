@@ -21,11 +21,14 @@
 
         <div id="prompts" class="tab-content active">
             <div class="editor-container">
-                <select id="agentSelect">
-                    <option value="classifier">classifier</option>
-                    <option value="api">api</option>
-                    <option value="sql">sql</option>
-                </select>
+                <div class="editor-header">
+                    <label for="agentSelect">Agent:</label>
+                    <select id="agentSelect">
+                        <option value="classifier">classifier</option>
+                        <option value="api">api</option>
+                        <option value="sql">sql</option>
+                    </select>
+                </div>
 
                 <textarea id="promptEditor"></textarea>
 

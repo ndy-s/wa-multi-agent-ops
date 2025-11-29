@@ -173,6 +173,46 @@ button i, button svg {
     background: #5a6268;  
 }
 
+/* Agent selector dropdown */
+.editor-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #34495e;
+}
+
+#agentSelect {
+    width: 220px;
+    padding: 10px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #ffffff;
+    color: #2c3e50;
+    outline: none;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#agentSelect:hover {
+    border-color: #007bff;
+}
+
+#agentSelect:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+}
+
+/* Container alignment */
+.editor-container select {
+    align-self: flex-start; 
+}
 
 /* JSON error highlighting */
 .cm-json-error {
