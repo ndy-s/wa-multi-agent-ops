@@ -124,7 +124,6 @@
 
             section.fields.forEach(f => {
                 const value = data[f.key] ?? "";
-                console.log(`${f.key}: ${value}`);
                 let inputHtml = "";
 
                 if (f.type === "toggle") {

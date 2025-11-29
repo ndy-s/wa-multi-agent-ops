@@ -3,7 +3,7 @@ import { formatLLMMessage } from "../../helpers/llm.js";
 import { loadConfig } from "../../config/env.js";
 import logger from "../../helpers/logger.js";
 import { EmbeddingStore } from "../base/EmbeddingStore.js";
-import { apiRegistry } from "./registry.js";
+import { registryRepository } from "../../repositories/registry-repository.js";
 
 const apiStore = new EmbeddingStore("api-embeddings");
 
@@ -15,7 +15,12 @@ export async function buildApiPrompt(msgJSON, memory) {
         msgJSON.quotedContext
     );
 
-    const defaultApis = Object.entries(apiRegistry).map(([id, meta]) => ({ id, meta }));
+    const dbApiRegistry = await registryRepository.get("API_REGISTRY");
+    if (!dbApiRegistry) {
+        logger.warn("[apiAgent] API registry is empty in DB, using empty fallback");
+    }
+
+    const defaultApis = Object.entries(dbApiRegistry || {}).map(([id, meta]) => ({ id, meta }));
     let apis = defaultApis;
     let systemPrompt;
 
@@ -50,7 +55,7 @@ export async function buildApiPrompt(msgJSON, memory) {
         }
     } 
 
-    systemPrompt = apiRegistryPrompt(apis);
+    systemPrompt = await apiRegistryPrompt(apis);
     const memoryPrompt = buildMemoryPrompt(memory);
 
     return {

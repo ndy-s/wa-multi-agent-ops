@@ -1,8 +1,7 @@
-let loaded = { api: false, sql: false, schema: false };
-let editors = { api: null, sql: null, schema: null };
-let validJson = { api: false, sql: false, schema: false };
-
-let lastSavedJson = { api: "", sql: "", schema: "" };
+let loaded = { api: false, sql: false, schema: false, prompts: false };
+let editors = { api: null, sql: null, schema: null, prompts: null };
+let validJson = { api: false, sql: false, schema: false, prompts: false };
+let lastSavedJson = { api: "", sql: "", schema: "", prompts: "" };
 
 const skeletonTemplates = {
     api: JSON.stringify({
@@ -64,7 +63,8 @@ const skeletonTemplates = {
             "description": "Fetch by ID",
             "params": ["id"]
         }
-    }, null, 4)
+    }, null, 4),
+
 };
 
 function highlightChanges(type) {
@@ -103,62 +103,75 @@ function switchTab(tab) {
 
 async function loadRegistry(type) {
     try {
-        const res = await fetch(`/api/registry/${type}`);
-        const data = await res.json();
-        const jsonString = JSON.stringify(data, null, 4);
+        let res = null;
+        let textarea = null;
+        let content = "";
 
-        const textarea = document.getElementById(type + "Json");
-        textarea.value = jsonString;
+        if (type === "prompts") {
+            const agentSelect = document.getElementById("agentSelect");
+            const agent = agentSelect ? agentSelect.value : "classifier";
+            res = await fetch(`/api/agent-prompts/${agent}`);
+            content = await res.text(); 
+            textarea = document.getElementById("promptEditor");
+            lastSavedJson[type] = content.split("\n");
+        } else {
+            res = await fetch(`/api/registry/${type}`);
+            const data = await res.json();
+            content = JSON.stringify(data, null, 4);
+            textarea = document.getElementById(type + "Json");
+            lastSavedJson[type] = content.split("\n");
+        }
 
-        // Save baseline for diff tracking
-        lastSavedJson[type] = jsonString.split("\n");
+        if (!textarea) throw new Error("Textarea not found for tab: " + type);
 
+        if (editors[type]) {
+            editors[type].setValue(content);
+            lastSavedJson[type] = content.split("\n");
+            highlightChanges(type);
+            loaded[type] = true;
+            return;
+        }
+
+        textarea.value = content;
         const container = document.getElementById(type);
 
-        if (!editors[type]) {
-            editors[type] = CodeMirror.fromTextArea(textarea, {
-                mode: { name: "javascript", json: true },
-                lineNumbers: true,
-                tabSize: 4,
-                indentUnit: 4,
-                indentWithTabs: false,
-                theme: "idea",
-                autoCloseBrackets: true,
-                matchBrackets: true,
-                keyMap: "default",
-                viewportMargin: Infinity,
-                foldGutter: true,
-                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-                extraKeys: {
-                    Tab: cm => {
-                        if (cm.somethingSelected()) {
-                            cm.indentSelection("add");
-                        } else {
-                            const spaces = " ".repeat(cm.getOption("indentUnit"));
-                            cm.replaceSelection(spaces, "end");
-                        }
-                    },
-                    "Shift-Tab": cm => cm.indentSelection("subtract"),
-                    Backspace: cm => {
-                        const pos = cm.getCursor();
-                        const line = cm.getLine(pos.line);
-                        if (/^ {1,4}$/.test(line.slice(0, pos.ch).slice(-cm.getOption("indentUnit")))) {
-                            cm.replaceRange("", { line: pos.line, ch: pos.ch - cm.getOption("indentUnit") }, pos);
-                        } else {
-                            cm.deleteH(-1, "char");
-                        }
-                    }
+        editors[type] = CodeMirror.fromTextArea(textarea, {
+            mode: type === "prompts" ? "text/plain" : { name: "javascript", json: true },
+            lineNumbers: true,
+            tabSize: 4,
+            indentUnit: 4,
+            indentWithTabs: false,
+            theme: "idea",
+            autoCloseBrackets: type !== "prompts",
+            matchBrackets: type !== "prompts",
+            keyMap: "default",
+            viewportMargin: Infinity,
+            foldGutter: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            extraKeys: {
+                Tab: cm => {
+                    if (cm.somethingSelected()) cm.indentSelection("add");
+                    else cm.replaceSelection(" ".repeat(cm.getOption("indentUnit")), "end");
+                },
+                "Shift-Tab": cm => cm.indentSelection("subtract"),
+                Backspace: cm => {
+                    const pos = cm.getCursor();
+                    const line = cm.getLine(pos.line);
+                    if (/^ {1,4}$/.test(line.slice(0, pos.ch).slice(-cm.getOption("indentUnit")))) {
+                        cm.replaceRange("", { line: pos.line, ch: pos.ch - cm.getOption("indentUnit") }, pos);
+                    } else cm.deleteH(-1, "char");
                 }
-            });
+            }
+        });
 
-            editors[type].setSize(null, 600);
+        editors[type].setSize(null, 600);
 
-            const updateBtn = container.querySelector(".update-btn");
+        const updateBtn = container.querySelector(".update-btn");
 
+        // Only validate JSON for non-prompts
+        if (type !== "prompts") {
             editors[type].on("change", () => {
                 const val = editors[type].getValue();
-
-                // Validate JSON
                 try {
                     JSON.parse(val);
                     validJson[type] = true;
@@ -171,7 +184,10 @@ async function loadRegistry(type) {
                     updateBtn.style.background = "#999";
                     editors[type].getWrapperElement().style.backgroundColor = "#FFCDD2";
                 }
-
+                highlightChanges(type);
+            });
+        } else {
+            editors[type].on("change", () => {
                 highlightChanges(type);
             });
         }
@@ -181,6 +197,71 @@ async function loadRegistry(type) {
 
     } catch (err) {
         alert("Failed to load registry: " + err);
+        console.error(err);
+    }
+}
+
+async function updateRegistry(type) {
+    if (type !== "prompts" && !validJson[type]) {
+        alert("Cannot update. JSON is invalid!");
+        return;
+    }
+
+    const confirmed = confirm(`Are you sure you want to update the ${type.toUpperCase()} registry?`);
+    if (!confirmed) return;
+
+    const updateBtn = document.querySelector(`#${type} .update-btn`);
+    updateBtn.disabled = true;
+    const originalText = updateBtn.innerText;
+    updateBtn.innerText = "Updating...";
+
+    try {
+        let res;
+        if (type === "prompts") {
+            const agent = document.getElementById("agentSelect").value;
+            const text = editors[type].getValue();
+            res = await fetch(`/api/agent-prompts/${agent}`, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain" }, 
+                body: text
+            });
+        } else {
+            const data = JSON.parse(editors[type].getValue());
+            res = await fetch(`/api/registry/${type}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+        }
+
+        if (res.ok) {
+            if (type === "prompts") {
+                const agent = document.getElementById("agentSelect").value;
+                const freshRes = await fetch(`/api/agent-prompts/${agent}`);
+                const freshText = await freshRes.text();
+                editors[type].setValue(freshText);
+                lastSavedJson[type] = freshText.split("\n");
+            } else {
+                const freshRes = await fetch(`/api/registry/${type}`);
+                const freshData = await freshRes.json();
+                const jsonString = JSON.stringify(freshData, null, 4);
+                editors[type].setValue(jsonString);
+                lastSavedJson[type] = jsonString.split("\n");
+            }
+
+            highlightChanges(type);
+            alert(type.toUpperCase() + " registry updated successfully!");
+        } else {
+            const errText = await res.text();
+            alert("Failed to update registry: " + errText);
+        }
+
+    } catch (err) {
+        alert("Failed to update registry: " + err);
+        console.error(err);
+    } finally {
+        updateBtn.disabled = false;
+        updateBtn.innerText = originalText;
     }
 }
 
@@ -210,14 +291,22 @@ function appendSkeleton(tab) {
     const currentValue = cm.getValue().trim();
     const skeleton = skeletonTemplates[tab];
 
-    if (!currentValue) {
-        cm.setValue(skeleton);
-    } else {
-        try {
-            const merged = { ...JSON.parse(currentValue), ...JSON.parse(skeleton) };
-            cm.setValue(JSON.stringify(merged, null, 4));
-        } catch {
+    if (tab === "prompts") {
+        if (!currentValue) {
+            cm.setValue(skeleton);
+        } else {
             cm.setValue(currentValue + "\n\n" + skeleton);
+        }
+    } else {
+        if (!currentValue) {
+            cm.setValue(skeleton);
+        } else {
+            try {
+                const merged = { ...JSON.parse(currentValue), ...JSON.parse(skeleton) };
+                cm.setValue(JSON.stringify(merged, null, 4));
+            } catch {
+                cm.setValue(currentValue + "\n\n" + skeleton);
+            }
         }
     }
 
@@ -228,61 +317,13 @@ function appendSkeleton(tab) {
     highlightChanges(tab);
 }
 
-async function updateRegistry(type) {
-    if (!validJson[type]) {
-        alert("Cannot update. JSON is invalid!");
-        return;
-    }
-
-    const confirmed = confirm(`Are you sure you want to update the ${type.toUpperCase()} registry?`);
-    if (!confirmed) return;
-
-    let data;
-    try {
-        data = JSON.parse(editors[type].getValue());
-    } catch (err) {
-        alert("Invalid JSON: " + err);
-        return;
-    }
-
-    const updateBtn = document.querySelector(`#${type} .update-btn`);
-    updateBtn.disabled = true;
-    const originalText = updateBtn.innerText;
-    updateBtn.innerText = "Updating...";
-
-    try {
-        const res = await fetch(`/api/registry/${type}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
-
-        if (res.ok) {
-            const freshRes = await fetch(`/api/registry/${type}`);
-            const freshData = await freshRes.json();
-
-            const jsonString = JSON.stringify(freshData, null, 4);
-            editors[type].setValue(jsonString);
-
-            // Reset baseline
-            lastSavedJson[type] = jsonString.split("\n");
-            highlightChanges(type);
-
-            alert(type.toUpperCase() + " registry updated successfully!");
-        } else {
-            const errText = await res.text();
-            alert("Failed to update registry: " + errText);
-        }
-
-    } catch (err) {
-        alert("Failed to update registry: " + err);
-
-    } finally {
-        updateBtn.disabled = !validJson[type];
-        updateBtn.innerText = originalText;
-    }
+const agentSelectEl = document.getElementById("agentSelect");
+if (agentSelectEl) {
+    agentSelectEl.addEventListener("change", () => {
+        loadRegistry("prompts");
+    });
 }
 
-loadRegistry("api");
+loadRegistry("prompts");
 
 

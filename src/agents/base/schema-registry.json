@@ -1,0 +1,72 @@
+{
+    "customers": {
+        "table": "customers",
+        "description": "Stores information about loan customers",
+        "columns": [
+            { "name": "id", "type": "INTEGER", "description": "Primary key of the customer" },
+            { "name": "full_name", "type": "TEXT", "description": "Full name of the customer" },
+            { "name": "email", "type": "TEXT", "description": "Customer email address" },
+            { "name": "phone", "type": "TEXT", "description": "Customer phone number" },
+            { "name": "date_of_birth", "type": "DATE", "description": "Customer date of birth" },
+            { "name": "created_at", "type": "TIMESTAMP", "description": "Customer record creation timestamp" }
+        ]
+    },
+    "loan_products": {
+        "table": "loan_products",
+        "description": "Stores loan product definitions",
+        "columns": [
+            { "name": "id", "type": "INTEGER", "description": "Primary key of the loan product" },
+            { "name": "name", "type": "TEXT", "description": "Name of the loan product" },
+            { "name": "interest_rate", "type": "DECIMAL", "description": "Interest rate for this loan product" },
+            { "name": "term_months", "type": "INTEGER", "description": "Loan duration in months" },
+            { "name": "created_at", "type": "TIMESTAMP", "description": "Record creation timestamp" }
+        ]
+    },
+    "loans": {
+        "table": "loans",
+        "description": "Stores loan applications and disbursements",
+        "columns": [
+            { "name": "id", "type": "INTEGER", "description": "Primary key of the loan" },
+            { "name": "customer_id", "type": "INTEGER", "description": "Customer who took the loan" },
+            { "name": "loan_product_id", "type": "INTEGER", "description": "Type of loan" },
+            { "name": "principal_amount", "type": "DECIMAL", "description": "Loan principal amount" },
+            { "name": "interest_rate", "type": "DECIMAL", "description": "Loan interest rate" },
+            { "name": "start_date", "type": "DATE", "description": "Loan start date" },
+            { "name": "due_date", "type": "DATE", "description": "Loan due date" },
+            { "name": "status", "type": "TEXT", "description": "Loan status (pending, active, closed)" },
+            { "name": "created_at", "type": "TIMESTAMP", "description": "Loan record creation timestamp" }
+        ],
+        "relations": [
+            {
+                "column": "customer_id",
+                "references": "customers.id",
+                "description": "Customer who owns the loan"
+            },
+            {
+                "column": "loan_product_id",
+                "references": "loan_products.id",
+                "description": "Type of loan product"
+            }
+        ]
+    },
+    "payments": {
+        "table": "payments",
+        "description": "Tracks loan repayments",
+        "columns": [
+            { "name": "id", "type": "INTEGER", "description": "Primary key of the payment" },
+            { "name": "loan_id", "type": "INTEGER", "description": "Loan associated with the payment" },
+            { "name": "amount", "type": "DECIMAL", "description": "Payment amount" },
+            { "name": "payment_date", "type": "DATE", "description": "Date of payment" },
+            { "name": "created_at", "type": "TIMESTAMP", "description": "Payment record creation timestamp" }
+        ],
+        "relations": [
+            {
+                "column": "loan_id",
+                "references": "loans.id",
+                "description": "Loan being repaid"
+            }
+        ]
+    }
+}
+
+

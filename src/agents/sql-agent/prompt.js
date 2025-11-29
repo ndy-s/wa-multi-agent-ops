@@ -3,7 +3,7 @@ import logger from "../../helpers/logger.js";
 import { formatLLMMessage } from "../../helpers/llm.js";
 import { EmbeddingStore } from "../base/EmbeddingStore.js";
 import { buildMemoryPrompt, sqlRegistryPrompt } from "../base/prompt-builder.js";
-import { schemaRegistry, sqlRegistry } from "./registry.js";
+import { registryRepository } from "../../repositories/registry-repository.js";
 
 const sqlStore = new EmbeddingStore("sql-embeddings");
 const schemaStore = new EmbeddingStore("schema-embeddings");
@@ -16,8 +16,14 @@ export async function buildSqlPrompt(msgJSON, memory) {
         msgJSON.quotedContext
     );
 
-    const defaultSchemas = Object.entries(schemaRegistry).map(([id, meta]) => ({ id, meta }));
-    const defaultSqls = Object.entries(sqlRegistry).map(([id, meta]) => ({ id, meta }));
+    const dbSchemaRegistry = await registryRepository.get("SCHEMA_REGISTRY");
+    const dbSqlRegistry = await registryRepository.get("SQL_REGISTRY");
+
+    if (!dbSchemaRegistry) logger.warn("[sqlAgent] Schema registry is empty in DB");
+    if (!dbSqlRegistry) logger.warn("[sqlAgent] SQL registry is empty in DB");
+
+    const defaultSchemas = Object.entries(dbSchemaRegistry || {}).map(([id, meta]) => ({ id, meta }));
+    const defaultSqls = Object.entries(dbSqlRegistry || {}).map(([id, meta]) => ({ id, meta }));
     let schemas = defaultSchemas;
     let sqls = defaultSqls;
     let systemPrompt;
@@ -61,7 +67,7 @@ export async function buildSqlPrompt(msgJSON, memory) {
         }
     }
 
-    systemPrompt = sqlRegistryPrompt(sqls, schemas);
+    systemPrompt = await sqlRegistryPrompt(sqls, schemas);
     const memoryPrompt = buildMemoryPrompt(memory);
 
     return {
@@ -70,4 +76,3 @@ export async function buildSqlPrompt(msgJSON, memory) {
         userMessage
     };
 }
-

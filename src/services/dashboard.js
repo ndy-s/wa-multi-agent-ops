@@ -1,24 +1,17 @@
-import fs from "fs";
 import path from "path";
 import express from "express";
-import { fileURLToPath } from "url";
 import logger from "../helpers/logger.js";
 import { loadConfig } from "../config/env.js";
 import { openSqliteDB } from "../db/sqlite.js";
-import { apiRegistry } from "../agents/api-agent/registry.js";
-import { schemaRegistry,sqlRegistry } from "../agents/sql-agent/registry.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const apiRegistryFile = path.join(__dirname, "../agents/api-agent/registry.js");
-const sqlRegistryFile = path.join(__dirname, "../agents/sql-agent/registry.js");
+import { agentPromptsRepository } from "../repositories/agent-prompts-repository.js";
+import { registryRepository } from "../repositories/registry-repository.js";
 
 export async function startOpsDashboard(port = 55555) {
     const config = await loadConfig();
     const db = await openSqliteDB();
     const app = express();
 
+    app.use(express.text({ type: "text/plain" }));
     app.use(express.json());
 
     app.use((req, res, next) => {
@@ -74,90 +67,105 @@ export async function startOpsDashboard(port = 55555) {
         }
     });
 
-    app.get("/api/registry/api", (req, res) => {
+    app.get("/api/agent-prompts/:agent", async (req, res) => {
+        const { agent } = req.params;
+
         try {
-            res.json(apiRegistry);
+            const content = await agentPromptsRepository.get(agent);
+            res.type("text/plain").send(content || "");
+        } catch (err) {
+            logger.error("Failed to fetch prompts:", err);
+            res.status(500).json({ error: "Failed to fetch prompts"});
+        }
+    });
+
+    app.post("/api/agent-prompts/:agent", async (req, res) => {
+        const { agent } = req.params;
+
+        try {
+            let text = "";
+
+            if (typeof req.body === "string") {
+                text = req.body;
+            } else if (req.body && req.body.text) {
+                text = req.body.text;
+            } else {
+                text = req.rawBody?.toString() ?? "";
+            }
+
+            if (!text) {
+                return res.status(400).send("Prompt content is empty");
+            }
+
+            const ok = await agentPromptsRepository.save(agent, text);
+
+            if (!ok) return res.status(500).send("Failed to save prompts");
+
+            res.json({ success: true });
+        } catch (err) {
+            logger.error("Failed to save prompts:", err);
+            res.status(500).json({ error: "Failed to save prompts" });
+        }
+    });
+
+    app.get("/api/registry/api", async (req, res) => {
+        try {
+            const data = await registryRepository.get("API_REGISTRY");
+            res.json(data || {});
         } catch (err) {
             logger.error("Failed to fetch api registry:", err);
             res.status(500).json({ error: "Failed to fetch api registry" });
         }
     });
 
-    app.get("/api/registry/sql", (req, res) => {
-        try {
-            res.json(sqlRegistry);
-        } catch (err) {
-            logger.error("Failed to fetch sql registry:", err);
-            res.status(500).json({ error: "Failed to fetch sql registry" });
-        }
-    });
-
-    app.get("/api/registry/schema", (req, res) => {
-        try {
-            res.json(schemaRegistry);
-        } catch (err) {
-            logger.error("Failed to fetch schema registry:", err);
-            res.status(500).json({ error: "Failed to fetch schema registry" });
-        }
-    });
-
     app.post("/api/registry/api", async (req, res) => {
         try {
             const newRegistry = req.body;
-
-            const content = `export const apiRegistry = ${JSON.stringify(newRegistry, null, 4)};\n`;
-            await fs.promises.writeFile(apiRegistryFile, content, "utf-8");
-
-            Object.keys(apiRegistry).forEach(k => delete apiRegistry[k]); 
-            Object.assign(apiRegistry, newRegistry);
-
-            res.json({ success: true, message: "API registry fully replaced and saved to file" });
+            await registryRepository.save("API_REGISTRY", "api", newRegistry);
+            res.json({ success: true, message: "API registry updated successfully" });
         } catch (err) {
             logger.error("Failed to update API registry:", err);
             res.status(500).json({ error: "Failed to update API registry" });
         }
     });
 
-    app.post("/api/registry/schema", async (req, res) => {
+    app.get("/api/registry/sql", async (req, res) => {
         try {
-            const newSchema = req.body;
-
-            const content = `
-export const schemaRegistry = ${JSON.stringify(newSchema, null, 4)};
-export const sqlRegistry = ${JSON.stringify(sqlRegistry, null, 4)};
-`;
-
-            await fs.promises.writeFile(sqlRegistryFile, content, "utf-8");
-
-            // Update runtime object
-            Object.keys(schemaRegistry).forEach(k => delete schemaRegistry[k]);
-            Object.assign(schemaRegistry, newSchema);
-
-            res.json({ success: true, message: "Schema registry updated successfully" });
+            const data = await registryRepository.get("SQL_REGISTRY");
+            res.json(data || {});
         } catch (err) {
-            logger.error("Failed to update schema registry:", err);
-            res.status(500).json({ error: "Failed to update schema registry" });
+            logger.error("Failed to fetch sql registry:", err);
+            res.status(500).json({ error: "Failed to fetch sql registry" });
         }
     });
 
     app.post("/api/registry/sql", async (req, res) => {
         try {
-            const newSqlRegistry = req.body;
-
-            const content = `
-export const schemaRegistry = ${JSON.stringify(schemaRegistry, null, 4)};
-export const sqlRegistry = ${JSON.stringify(newSqlRegistry, null, 4)};
-`;
-
-            await fs.promises.writeFile(sqlRegistryFile, content, "utf-8");
-
-            Object.keys(sqlRegistry).forEach(k => delete sqlRegistry[k]);
-            Object.assign(sqlRegistry, newSqlRegistry);
-
+            await registryRepository.save("SQL_REGISTRY", "sql", req.body);
             res.json({ success: true, message: "SQL registry updated successfully" });
         } catch (err) {
             logger.error("Failed to update SQL registry:", err);
             res.status(500).json({ error: "Failed to update SQL registry" });
+        }
+    });
+
+    app.get("/api/registry/schema", async (req, res) => {
+        try {
+            const data = await registryRepository.get("SCHEMA_REGISTRY");
+            res.json(data || {});
+        } catch (err) {
+            logger.error("Failed to fetch schema registry:", err);
+            res.status(500).json({ error: "Failed to fetch schema registry" });
+        }
+    });
+
+    app.post("/api/registry/schema", async (req, res) => {
+        try {
+            await registryRepository.save("SCHEMA_REGISTRY", "schema", req.body);
+            res.json({ success: true, message: "Schema registry updated successfully" });
+        } catch (err) {
+            logger.error("Failed to update schema registry:", err);
+            res.status(500).json({ error: "Failed to update schema registry" });
         }
     });
 
@@ -199,7 +207,7 @@ export const sqlRegistry = ${JSON.stringify(newSqlRegistry, null, 4)};
                 let val = settings[key];
 
                 if (val === null || val === undefined) {
-                    val = "";
+                   val = "";
                 } else if (typeof val === "boolean") {
                     val = val ? "true" : "false";
                 } else if ((key.endsWith("_API_KEYS") || (key.endsWith("_KEYWORDS")) || key === "WHITELIST") || key === "MODEL_PRIORITY" || key === "API_CUSTOM_HEADERS" && typeof val === "string") {

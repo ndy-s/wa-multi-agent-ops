@@ -1,14 +1,14 @@
 import { formatLLMMessage } from "../../helpers/llm.js";
 import { buildMemoryPrompt, classifierRegistryPrompt } from "../base/prompt-builder.js";
 
-export function buildClassifierPrompt(msgJSON, memory) {
+export async function buildClassifierPrompt(msgJSON, memory) {
     const userMessage = formatLLMMessage(
         msgJSON.sender, 
         msgJSON.content, 
         msgJSON.quotedContext
     );
 
-    const systemPrompt = classifierRegistryPrompt();
+    const systemPrompt = await classifierRegistryPrompt();
     const memoryPrompt = buildMemoryPrompt(memory);
 
     return {
