@@ -44,7 +44,7 @@ Or even something operational like:
 
 The agents take over from there. They generate the SQL or make the API calls, retrieve the data, validate the response, and return everything back to you. There are no extra steps and no friction. It's just a natural conversation that gets work done.
 
-### Why It's Cheap to Run
+### Why It's Cheap to Run?
 
 Another thing that makes this project easy to maintain is that it relies completely on free AI models. I currently use Google's free [Gemini model](https://ai.google.dev/gemini-api) and several free models available on OpenRouter, especially the free [DeepSeek model](https://openrouter.ai/tngtech/tng-r1t-chimera:free).
 
@@ -102,3 +102,7 @@ If you need to modify the registry, return to the main dashboard page and open t
 
 When the bot starts, a QR code will appear in your console. Open WhatsApp on your phone, go to Linked Devices, and scan the QR code. Once linked, the bot is active and ready to respond to messages according to the whitelist.
 
+## Under the Hood
+
+## License
+MIT
