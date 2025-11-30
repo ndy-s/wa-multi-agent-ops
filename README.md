@@ -56,11 +56,11 @@ If you ever want to scale it further or make it more powerful, switching to a pa
 
 ## Quick Setup
 
-Getting everything running is simple. Here's the full workflow.
+Getting the system up and running is straightforward. Here’s the workflow step by step.
 
 ### Clone Repository & Copy Environment File
 
-Before running anything, copy the example environment file:
+First, clone the repository and set up your environment:
 
 ```bash
 git clone https://github.com/ndy-s/wa-multi-agent-ops.git
@@ -69,85 +69,95 @@ cp .env-example .env
 npm install
 ```
 
+This will copy the example environment file and install all necessary dependencies.
+
 ### Start the Server
 
 ```bash
 npm run start
 ```
 
-This will automatically launch the Dashboard. Open your browser and visit:
+This command will automatically launch the Dashboard. Open your browser and visit:
 
 ```
 http://localhost:55555
 ```
 
-On first startup, the system will automatically seed all required Agents, registry data, and base knowledge, so you can start immediately without manual seeding. The default dashboard login uses the username `admin` with the password `password`. You can change these values in the `.env` file and rerun the application.
+> [!TIP]
+> On the first startup, the system seeds all required Agents, their prompts, and registry data for base knowledge automatically. You can start using it immediately without manual setup.
+
+The default login uses `admin` for the username and `password` for the password. You can change these credentials in the `.env` file and restart the server.
 
 ### Configure Your Agents
 
-Inside the dashboard, open the Agents Configuration menu and fill in all required fields:
+Inside the dashboard, go to **Agents Configuration** and fill in the required fields:
 
-* **Base API URL**: This is used by the API Agent to call external services. A default value is already provided, so you do not need to change this unless you want to test with your own custom API endpoint.
-* **SQL Settings**: Currently, the SQL Agent only supports Oracle. You need to provide the username, password, and connection string. For example, your connection string could be `192.168.1.10:1521/ORCL` or `localhost/XEPDB1`, depending on your Oracle setup. Once entered, the SQL Agent can connect to the database and execute queries.
-* **LLM API keys**: Add keys for any models you want the bot to use, such as Gemini, DeepSeek, OpenRouter, or OpenAI. You can enter more than one API key by putting each key on a separate row. The system uses these keys to load-balance requests.
-* **Model Priority**: Enter the order in which the models should be used. Each model name should be placed on its own row. This priority list determines which model is tried first. The system uses a [round-robin](https://en.wikipedia.org/wiki/Round-robin_scheduling) strategy internally to distribute tasks and provide fallback if a model is slow or unavailable.
-* **Whitelist input**: Enter phone numbers or group IDs that the bot is allowed to respond to. You can leave this empty at first. After linking your WhatsApp account, if a message comes from a chat not in the whitelist, the bot will log the user or group ID in the console. You can then copy the ID and add it to the whitelist so the bot will start responding in that chat. This makes it easy to manage authorized chats dynamically.
+* **Base API URL** – Used by the API Agent to call external services. A default value is provided, so you only need to change it if you are testing your own API.
+* **SQL Settings** – The SQL Agent currently supports Oracle only. Provide the username, password, and connection string (e.g., `192.168.1.10:1521/ORCL` or `localhost/XEPDB1`). Once configured, the SQL Agent can connect and execute queries.
+* **LLM API keys** – Add keys for any AI models you want the bot to use, such as Gemini, DeepSeek, OpenRouter, or OpenAI. You can enter multiple keys, one per line. The system will automatically load-balance requests between them.
+* **Model Priority** – Specify the order in which models should be tried. Place each model on its own row. The system uses a round-robin strategy to distribute tasks and provide fallback if a model is slow or unavailable.
+* **Whitelist input** – List phone numbers or group IDs the bot is allowed to respond to. You can leave this empty initially. After linking WhatsApp, any unrecognized chat will be logged in the console. You can then copy the ID into the whitelist to authorize that chat.
 
-After clicking Save Configuration, the system will check whether configuration data already exists, store and apply the settings, and automatically start the WhatsApp bot.
+> [!TIP]
+> After saving the configuration, the system will validate your inputs, store the settings, and automatically start the WhatsApp bot.
 
-If you need to modify the registry, return to the main dashboard page and open the Agents Knowledge Base section. This includes items such as Agent prompts and knowledge base definitions like API lists, database schema, and available SQL commands. Everything is automatically seeded on first run, so you do not need to change anything unless you want to extend or customize the system.
+If you want to modify the registry later, go to the **Agents Knowledge Base** section on the main dashboard. Here you can edit Agent prompts, API lists, database schemas, and available SQL commands. Everything is pre-seeded on the first run, so changes are only necessary if you want to extend or customize the system.
 
 ### Connect Your WhatsApp Account
 
-When the bot starts, a QR code will appear in your console. Open WhatsApp on your phone, go to Linked Devices, and scan the QR code. Once linked, the bot is active and ready to respond to messages according to the whitelist.
+When the bot starts, a QR code will appear in your console. Open WhatsApp on your phone, go to **Linked Devices**, and scan the code. Once linked, the bot is active and will respond to messages according to the whitelist.
 
 ## Under the Hood
 
-When I started building this agent-based application, the first thing on my mind was cost. It is a critical factor because no matter how cool a project is, if it is expensive to run, it will not scale and it is likely it will never get used. I wanted to avoid that trap, so cost became a key design consideration from day one.
+When I first started building this agent-based application, cost was the first thing on my mind. No matter how cool a project is, if it is expensive to run, it will not scale, and it probably will not get used at all. I wanted to avoid that trap, so cost became a key design consideration from day one.
 
-For the AI itself, I experiment with both free and paid models. On the free side, I use Google Gemini-2.5-Flash and OpenRouter's DeepSeek-R1T2-Chimera models. Paid options include the GPT-4.1 models for faster and more powerful responses. For embeddings, I rely on the free all-MiniLM-L6-v2 model or text-embedding-3-small embeddings, depending on the task. In practice, the free models are already good enough for most of the tasks in this project.
+For the AI itself, I experiment with both free and paid models. On the free side, I use Google Gemini-2.5-Flash and OpenRouter's DeepSeek-R1T2-Chimera models. Paid options include GPT-4.1 for faster, more capable responses. For embeddings, I rely on either the free all-MiniLM-L6-v2 model or text-embedding-3-small, depending on the task. In practice, the free models are already good enough for most tasks in this project.
 
-For easier integration with multiple LLM APIs, I rely on [LangChain](https://www.langchain.com/). Each model has its own characteristics and ways of interacting. LangChain helps standardize the process and allows me to work with different models using a consistent approach.
-
-This setup is flexible. You can switch between models to find what works best for your needs. Adding a completely new model is also possible. It requires only minor code adjustments and is not difficult.
+To make integration with multiple LLM APIs easier, I rely on [LangChain](https://www.langchain.com/). Each model has its quirks, and LangChain provides a consistent way to interact with them. Switching between models is simple, and adding a new one usually requires only minor tweaks.
 
 ### The Agents
 
-At the core of this project are the Agents. Each one has a specific role, a clear responsibility, and a simple way of interacting with the rest of the system. I designed them this way so the whole application feels modular and easy to reason about. Instead of building one large and complicated model that tries to do everything, the system is split into smaller parts that each handle a single task well.
+The core of this project is built around the Agents. Each has a specific role, a clear responsibility, and a simple way of interacting with the rest of the system. Instead of building one huge model that tries to do everything, I split the system into smaller, focused parts.
 
-The main Agents in this system are the API Agent and the SQL Agent. Both of them rely on a registry system so the AI always knows what tools are available, how they work, and what parameters they require.
+The two main Agents are the API Agent and the SQL Agent. Both rely on registries so the AI always knows what tools are available and how to use them.
 
 #### API Agent
 
-The API Agent is responsible for calling external services. To make this work well, I use an API registry. This registry contains the API name, description, input parameters, output structure, and a short explanation of what each endpoint is actually meant to do.
+The API Agent handles external services. To make this reliable, I created an API registry containing the name, description, input parameters, output structure, and purpose of each endpoint. LLMs work much better with clear instructions. Without them, they either call the wrong API or guess randomly.
 
-I wrote it this way because LLMs perform much better when they have clear instructions and a clean list of tools to choose from. If the Agent does not understand the purpose of an endpoint, it will either call the wrong API or guess something random. By keeping everything documented in the registry, the model has a reliable reference and makes fewer mistakes.
+Adding a new API is simple. Describe it in the registry, define its parameters, and the Agent can start using it. Good descriptions matter more than complex prompts, making the Agent predictable and easier to debug.
 
-Adding a new API is simple. You describe it in the registry, give it a clear purpose, define the required parameters, and the API Agent can start using it immediately. Most of the time, I find that good descriptions matter more than complex prompts. The Agent becomes more predictable and much easier to debug.
+> [!TIP]
+> Make sure each API endpoint has a clear purpose and input/output structure. The more precise your descriptions, the fewer mistakes the Agent will make.
 
-To complete the setup, you also need to configure the base API URL and any required headers in the dashboard under Agents Configuration. This lets the API Agent know where your service is hosted and what authentication or custom headers it needs to include with each request.
+Finally, the base API URL and any required headers are configured in the dashboard, so the Agent knows where and how to send requests.
 
 #### SQL Agent
 
-The SQL Agent is a bit more interesting because it needs to be both powerful and safe. I use a hybrid approach for this Agent, built around two different registries. The first one is the schema registry. This registry contains the database schema and describes what tables exist, what columns they have, and how those tables relate to each other. With this information, the model can generate queries on the fly, but only for reading data. Any SQL generated from the schema is strictly read-only.
+The SQL Agent needs to be both powerful and safe. I designed it with two registries:
 
-The second registry is the SQL registry. This one contains a collection of predefined queries that I have written myself. These queries can perform updates, inserts, deletions, or other actions that modify data. The SQL Agent is allowed to run these predefined queries, but it is not allowed to generate destructive queries on its own.
+* **Schema registry:** Describes tables, columns, and relationships. The Agent can generate queries from this, but only for reading data.
+* **SQL registry:** Contains predefined queries I wrote for updates, inserts, deletes, and other changes. The Agent can run these, but it cannot generate destructive SQL on its own.
 
-I designed it this way because letting the model freely write update or delete statements is a recipe for hallucinations and unpredictable behavior. By limiting generated SQL to select queries and handling all data-changing operations through predefined statements, the system stays flexible without becoming dangerous.
+> [!CAUTION]
+> Never allow the SQL Agent to generate update or delete queries on its own. This could lead to unpredictable or destructive behavior.
+
+This approach prevents hallucinations and keeps the system flexible. Generated queries are read-only, and any action that changes data is controlled.
 
 #### Routing & Classifier Agent
 
-Messages from the user are routed to these Agents by a Classifier Agent, which predicts the intent behind the text. To reduce cost and avoid unnecessary model calls, I also support keyword-based routing. Certain words can immediately send a message to the correct Agent without going through the classifier. These keywords can be configured in the dashboard. The defaults are simple: typing `api` routes to the API Agent, and `sql` routes to the SQL Agent.
+User messages are routed to the appropriate Agent by a Classifier Agent, which predicts intent. To save on costs, certain keywords can immediately send a message to the right Agent. Typing `api` routes to the API Agent, and typing `sql` routes to the SQL Agent. These keywords are configurable in the dashboard.
 
 ### The Bot
 
-On top of these Agents sits the WhatsApp bot, which acts as the main entry point for users. I chose WhatsApp for this project because it is the messaging app I use the most, both personally and for work. The system can actually run on any messaging platform, but for this implementation I decided to focus on WhatsApp because it is simply the most practical choice for me.
+On top of the Agents sits the WhatsApp bot, which is the main entry point for users. I chose WhatsApp because it is the messaging app I use the most, both personally and for work. While the system could run on any messaging platform, WhatsApp was simply the most practical choice.
 
-The bot itself is built using [Baileys](https://github.com/WhiskeySockets/Baileys), a powerful library for building WhatsApp clients. It handles message sending, receiving, reactions, typing indicators, and everything required to simulate a real WhatsApp user. Baileys makes the integration smooth and reliable, which is why I picked it.
+The bot is built with [Baileys](https://github.com/WhiskeySockets/Baileys), a library that handles sending and receiving messages, reactions, typing indicators, and more. The user sends a message, the bot forwards it to the right Agent, and the Agent responds. If needed, it asks for clarification or sends a confirmation request. To approve an action, the user can react with a thumbs-up emoji, keeping a human in the loop. I believe this is still important given current LLM capabilities.
 
-The flow is simple. The user sends a message, and the bot forwards it to the appropriate Agent. The Agent then responds, asks for clarification if needed, or sends a confirmation request. To approve an action, the user can react with a thumbs-up emoji. This keeps a human in the loop, which I believe is still important with the current capability of LLMs so that accidental or risky actions can be avoided.
+> [!CAUTION]
+> Each action has a 60-second timeout for automatic cancellation. If no confirmation is received within that time, the request will be canceled to prevent accidental operations.
 
-I also designed the Agent responses to feel more human. Instead of sending one long message like most LLM bots, the Agent replies in smaller chunks, usually one or two sentences at a time. I added a typing indicator and WPM-based typing speed to make the conversation feel more natural. These are small adjustments, but they make a noticeable difference and prevent the bot from feeling too rigid.
+I also worked to make the conversation feel natural. Agents reply in small chunks rather than one long message, and I added typing indicators with WPM-based speeds. These little touches make the interaction feel more human and prevent the bot from seeming rigid.
 
 ## Limitations
 
