@@ -31,15 +31,19 @@ Or even something operational like:
 
 The agents take over from there. They generate the SQL or make the API calls, retrieve the data, validate the response, and return everything back to you. There are no extra steps and no friction. It's just a natural conversation that gets work done.
 
-<div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-  <div style="flex: 1; min-width: 200px; max-width: 250px;">
-    <img src="https://github.com/ndy-s/wa-multi-agent-ops/blob/main/assets/api-agent-demo.gif" alt="API Agent Demo" style="width: 100%; border-radius: 8px;">
-    <p style="text-align: center;">API Agent Demo</p>
+<div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;">
+  <div style="width: 90px; height: 90px;">
+    <img src="https://github.com/ndy-s/wa-multi-agent-ops/blob/main/assets/api-agent-demo.gif" 
+         alt="API Agent Demo" 
+         style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+    <p style="text-align: center; font-size: 0.65em; margin: 2px 0 0;">API Agent Demo</p>
   </div>
 
-  <div style="flex: 1; min-width: 200px; max-width: 250px;">
-    <img src="https://github.com/ndy-s/wa-multi-agent-ops/blob/main/assets/sql-agent-demo.gif" alt="SQL Agent Demo" style="width: 100%; border-radius: 8px;">
-    <p style="text-align: center;">SQL Agent Demo</p>
+  <div style="width: 90px; height: 90px;">
+    <img src="https://github.com/ndy-s/wa-multi-agent-ops/blob/main/assets/sql-agent-demo.gif" 
+         alt="SQL Agent Demo" 
+         style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+    <p style="text-align: center; font-size: 0.65em; margin: 2px 0 0;">SQL Agent Demo</p>
   </div>
 </div>
 
