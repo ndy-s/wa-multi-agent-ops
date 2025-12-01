@@ -151,6 +151,36 @@ This approach prevents hallucinations and keeps the system flexible. Generated q
 
 User messages are routed to the appropriate Agent by a Classifier Agent, which predicts intent. To save on costs, certain keywords can immediately send a message to the right Agent. Typing `api` routes to the API Agent, and typing `sql` routes to the SQL Agent. These keywords are configurable in the dashboard.
 
+#### Embeddings
+
+LLMs have context window limits. Instead of dumping every registry entry into the prompt, this system uses embeddings to retrieve only the most relevant information.
+
+Whenever a user sends a query:
+1. The message is embedded
+2. It is compared against vectors from registries such as API definitions, SQL schemas, predefined queries, and examples
+3. The system selects two to six of the most relevant items
+4. Those are added into the Agent prompt
+5. The LLM receives only the necessary context
+
+The number of retrieved items (top K) is configurable in the dashboard for each Agent.
+If you want stricter behavior, reduce K. If you want broader matching, increase K.
+
+#### Self-Correction
+
+Even with good registries, LLMs can still hallucinate, especially when generating structured output such as API parameters or SQL payloads. To prevent this, each Agent uses a validation and retry loop:
+1. The model generates structured output, for example `{ params: { ... } }`
+2. The system validates it against the registry
+3. If something is wrong (missing fields, wrong type, invalid value):
+   * The Agent sends a clear error message back to the model
+   * The model corrects itself using the feedback
+4. This retry process continues until:
+   * The output becomes valid, or
+   * The maximum attempts are reached
+
+This approach greatly increases accuracy. Even weaker free models like DeepSeek or Gemini Flash become more reliable when they are allowed to learn from their mistakes inside the loop.
+
+Incorrect or incomplete structured outputs never reach the API or database because the Agent catches them first.
+
 ### The Bot
 
 On top of the Agents sits the WhatsApp bot, which is the main entry point for users. I chose WhatsApp because it is the messaging app I use the most, both personally and for work. While the system could run on any messaging platform, WhatsApp was simply the most practical choice.
